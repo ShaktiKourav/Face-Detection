@@ -1,0 +1,161 @@
+/* ==========================================================
+   AI MOODSENSE - GLOBAL STYLES (WHITE PREMIUM THEME)
+========================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+
+:root{
+  --background:#fdfcff;
+  --surface:rgba(255,255,255,.75);
+  --glass:rgba(255,255,255,.72);
+  --primary:#a855f7;
+  --secondary:#ec4899;
+  --accent:#c084fc;
+  --text-primary:#111827;
+  --text-secondary:#4b5563;
+  --border:rgba(168,85,247,.15);
+  --shadow:0 18px 45px rgba(168,85,247,.12);
+}
+
+*,
+*::before,
+*::after{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth}
+
+body{
+ font-family:"Outfit",sans-serif;
+ min-height:100vh;
+ overflow-x:hidden;
+ color:var(--text-primary);
+ background:
+ radial-gradient(circle at top left,rgba(236,72,153,.16),transparent 35%),
+ radial-gradient(circle at bottom right,rgba(168,85,247,.16),transparent 35%),
+ #fdfcff;
+ line-height:1.6;
+ -webkit-font-smoothing:antialiased;
+ -moz-osx-font-smoothing:grayscale;
+}
+
+::selection{background:rgba(236,72,153,.25);color:#111}
+
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:#f4f4f7}
+::-webkit-scrollbar-thumb{
+background:linear-gradient(180deg,#ec4899,#a855f7);
+border-radius:999px
+}
+
+a{text-decoration:none;color:inherit}
+img{display:block;width:100%;max-width:100%;height:auto}
+button,input,textarea,select{
+font:inherit;border:none;outline:none;background:none
+}
+button{cursor:pointer}
+.container{width:min(1320px,92%);margin:auto}
+section{padding:100px 0;position:relative}
+
+.glass{
+background:rgba(255,255,255,.7);
+backdrop-filter:blur(18px);
+-webkit-backdrop-filter:blur(18px);
+border:1px solid rgba(255,255,255,.9);
+border-radius:24px;
+box-shadow:
+0 10px 35px rgba(236,72,153,.08),
+0 20px 60px rgba(168,85,247,.10),
+inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+.primary-btn{
+display:inline-flex;
+align-items:center;
+gap:12px;
+padding:15px 28px;
+border-radius:16px;
+background:linear-gradient(135deg,#ec4899,#a855f7);
+color:#fff;
+font-weight:600;
+transition:all .35s ease;
+box-shadow:0 12px 30px rgba(168,85,247,.25);
+}
+.primary-btn:hover{
+transform:translateY(-4px) scale(1.02);
+box-shadow:0 20px 45px rgba(168,85,247,.35);
+}
+
+.gradient-text{
+background:linear-gradient(90deg,#ec4899,#a855f7);
+-webkit-background-clip:text;
+background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.hover-lift{transition:all .35s ease}
+.hover-lift:hover{
+transform:translateY(-6px);
+box-shadow:0 20px 50px rgba(168,85,247,.18);
+}
+
+.app-layout{min-height:100vh;display:flex;flex-direction:column}
+.main-content{flex:1}
+.layout{position:relative;min-height:100vh;overflow:hidden}
+.layout__content{position:relative;z-index:2}
+.layout__background{
+position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0
+}
+.gradient{
+position:absolute;border-radius:50%;filter:blur(130px);
+opacity:.35;animation:float 10s ease-in-out infinite;
+}
+.gradient--one{
+width:560px;height:560px;top:-180px;left:-120px;
+background:#f9a8d4;
+}
+.gradient--two{
+width:620px;height:620px;right:-180px;bottom:-220px;
+background:#c084fc;
+}
+.noise{
+position:absolute;inset:0;opacity:.03;
+background-image:radial-gradient(circle,#000 1px,transparent 1px);
+background-size:18px 18px;
+}
+
+.page-loader{display:grid;place-items:center;min-height:60vh}
+.loader-ring{
+width:52px;height:52px;border-radius:50%;
+border:4px solid rgba(168,85,247,.15);
+border-top-color:#ec4899;
+animation:spin .8s linear infinite;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible{
+outline:2px solid #a855f7;
+outline-offset:3px;
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{
+0%,100%{transform:translateY(0)}
+50%{transform:translateY(-35px)}
+}
+
+@media(max-width:992px){
+section{padding:80px 0}
+.container{width:94%}
+}
+@media(max-width:768px){
+section{padding:70px 0}
+.primary-btn{width:100%;justify-content:center}
+}
+@media(max-width:480px){
+.container{width:92%}
+}
+
+
+* {
+  scroll-behavior: smooth;
+}
+
