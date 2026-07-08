@@ -11,13 +11,13 @@ import {
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCFJiaDAL_8DEOM-cPlj4Qw4YhW-8LkqRk",
-  authDomain: "face-detection-ec20a.firebaseapp.com",
-  projectId: "face-detection-ec20a",
-  storageBucket: "face-detection-ec20a.firebasestorage.app",
-  messagingSenderId: "495824602646",
-  appId: "1:495824602646:web:efe86e67d698bca0a55737",
-  measurementId: "G-0JZW1T8YS6"
+  apiKey: "AIzaSyBMAzTnJtxEeofBkox7eBxYYPWQYNXV7Fk",
+  authDomain: "face-detection-913be.firebaseapp.com",
+  projectId: "face-detection-913be",
+  storageBucket: "face-detection-913be.firebasestorage.app",
+  messagingSenderId: "932317130268",
+  appId: "1:932317130268:web:1ba1e41f9072c21c2d39d9",
+  measurementId: "G-2C9JVVQXSY"
 };
 
 // Initialize Firebase

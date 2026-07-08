@@ -1,168 +1,320 @@
-import { useEffect, useState } from "react";
-import {
-  MdDelete,
-  MdDownload,
-  MdHistory,
-} from "react-icons/md";
 import { motion } from "framer-motion";
+import HistoryTable from "../components/history/HistoryTable";
+
+import {
+  MdHistory,
+  MdSecurity,
+  MdOutlineAutoGraph,
+} from "react-icons/md";
 
 const History = () => {
-  const [history, setHistory] = useState([]);
-
-  useEffect(() => {
-    const data =
-      JSON.parse(localStorage.getItem("faceHistory")) || [];
-
-    setHistory(data);
-  }, []);
-
-  const deleteItem = (id) => {
-    const updated = history.filter((item) => item.id !== id);
-
-    setHistory(updated);
-
-    localStorage.setItem(
-      "faceHistory",
-      JSON.stringify(updated)
-    );
-  };
-
-  const clearHistory = () => {
-    localStorage.removeItem("faceHistory");
-    setHistory([]);
-  };
-
-  const downloadImage = (image, id) => {
-    const link = document.createElement("a");
-    link.href = image;
-    link.download = `face-${id}.png`;
-    link.click();
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      {/* Header */}
+      {/* ==========================================
+                PAGE HEADER
+      ========================================== */}
 
-      <div className="rounded-3xl border border-white/80 bg-white/70 p-6 backdrop-blur-2xl shadow-[0_20px_50px_rgba(168,85,247,.12)]">
+      <motion.section
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: .45 }}
+  className="
+  relative
+  overflow-hidden
+  rounded-[30px]
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  p-6
+  shadow-[var(--shadow)]
+  "
+>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+  <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-pink-500/10 blur-[120px]" />
+  <div className="absolute -right-20 bottom-0 h-72 w-72 rounded-full bg-violet-500/10 blur-[120px]" />
 
-          <div>
-            <h1 className="text-3xl font-bold ">
-              Detection{" "}
-              <span className="bg-gradient-to-r from-pink-500 to-violet-600 bg-clip-text text-transparent">
-                History
-              </span>
-            </h1>
+  <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
-            <p className="mt-1 text-sm text-gray-500">
-              View all captured face detection records.
-            </p>
-          </div>
+    <div className="max-w-2xl">
 
-          {history.length > 0 && (
-            <button
-              onClick={clearHistory}
-              className="rounded-xl bg-gradient-to-r from-red-500 to-pink-500 px-6 py-3 font-semibold text-white shadow-lg transition hover:scale-105"
-            >
-              Clear History
-            </button>
-          )}
-        </div>
+      <span
+        className="
+        inline-flex
+        rounded-full
+        bg-gradient-to-r
+        from-pink-500/15
+        to-violet-500/15
+        px-3
+        py-1
+        text-[11px]
+        font-semibold
+        uppercase
+        tracking-[2px]
+        text-pink-500
+        "
+      >
+        Detection Records
+      </span>
+
+      <h1 className="mt-4 text-3xl font-bold text-[var(--text-primary)]">
+
+        AI Detection
+
+        
+
+      </h1>
+
+      <p className="mt-2 max-w-xl text-[14px] text-sm leading-6 text-[var(--text-secondary)]">
+
+        Review every face detection with mood prediction,
+        confidence score, AI recommendation and timeline.
+
+      </p>
+
+    </div>
+
+    <div className="flex gap-4">
+
+      <div
+        className="
+        rounded-2xl
+        border
+        border-[var(--border-color)]
+        bg-[var(--glass)]
+        p-4
+        text-center
+        backdrop-blur-xl
+        "
+      >
+
+        <MdHistory
+          size={28}
+          className="mx-auto text-pink-500"
+        />
+
+        <h4 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">
+
+          Records
+
+        </h4>
+
+        <p className="text-xs text-[var(--text-secondary)]">
+
+          AI Saved
+
+        </p>
+
       </div>
 
-      {/* Empty */}
+      <div
+        className="
+        rounded-2xl
+        bg-gradient-to-br
+        from-pink-500
+        via-fuchsia-500
+        to-violet-600
+        p-4
+        text-center
+        text-white
+        shadow-xl
+        "
+      >
 
-      {history.length === 0 ? (
-        <div className="rounded-3xl border border-white/80 bg-white/70 p-16 text-center backdrop-blur-2xl shadow-[0_20px_50px_rgba(168,85,247,.12)]">
+        <MdSecurity
+          size={28}
+          className="mx-auto"
+        />
+
+        <h4 className="mt-2 text-sm font-semibold">
+
+          Secure
+
+        </h4>
+
+        <p className="text-xs text-white/80">
+
+          Protected
+
+        </p>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</motion.section>
+      {/* ==========================================
+                QUICK INFO
+      ========================================== */}
+
+      <section className="grid gap-6 md:grid-cols-3">
+
+        <motion.div
+          whileHover={{ y: -5 }}
+          className="glass rounded-[28px] p-6"
+        >
 
           <MdHistory
-            className="mx-auto text-violet-400"
-            size={70}
+            size={36}
+            className="text-pink-500"
           />
 
-          <h2 className="mt-6 text-2xl font-bold">
-            No Detection History
-          </h2>
+          <h3 className="mt-4 text-xl font-bold">
 
-          <p className="mt-2 text-gray-500">
-            Capture a face to see history here.
+            Detection Records
+
+          </h3>
+
+          <p className="mt-2 text-sm leading-6 text-gray-500">
+
+            Every successful face detection is saved
+            automatically with mood prediction details.
+
           </p>
-        </div>
-      ) : (
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        </motion.div>
 
-          {history.map((item) => (
+        <motion.div
+          whileHover={{ y: -5 }}
+          className="glass rounded-[28px] p-6"
+        >
 
-            <motion.div
-              key={item.id}
-              whileHover={{ y: -6 }}
-              className="overflow-hidden rounded-3xl border border-white/80 bg-white/70 backdrop-blur-2xl shadow-[0_20px_50px_rgba(168,85,247,.12)]"
-            >
+          <MdOutlineAutoGraph
+            size={36}
+            className="text-violet-600"
+          />
 
-              <img
-                src={item.image}
-                alt=""
-                className="h-64 w-full object-cover"
-              />
+          <h3 className="mt-4 text-xl font-bold">
 
-              <div className="space-y-3 p-6">
+            AI Analytics
 
-                <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Date
-                  </span>
+          </h3>
 
-                  <span className="font-semibold">
-                    {item.date}
-                  </span>
-                </div>
+          <p className="mt-2 text-sm leading-6 text-gray-500">
 
-                <div className="flex justify-between">
-                  <span className="text-gray-500">
-                    Time
-                  </span>
+            Review confidence scores, mood trends,
+            recommendations and detection statistics.
 
-                  <span className="font-semibold">
-                    {item.time}
-                  </span>
-                </div>
+          </p>
 
-                <div className="pt-4 flex gap-3">
+        </motion.div>
 
-                  <button
-                    onClick={() =>
-                      downloadImage(item.image, item.id)
-                    }
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-violet-600 py-3 font-semibold text-white"
-                  >
-                    <MdDownload />
+        <motion.div
+          whileHover={{ y: -5 }}
+          className="glass rounded-[28px] p-6"
+        >
 
-                    Download
-                  </button>
+          <MdSecurity
+            size={36}
+            className="text-cyan-600"
+          />
 
-                  <button
-                    onClick={() =>
-                      deleteItem(item.id)
-                    }
-                    className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 hover:bg-red-200"
-                  >
-                    <MdDelete size={22} />
-                  </button>
+          <h3 className="mt-4 text-xl font-bold">
 
-                </div>
+            Secure Storage
 
-              </div>
+          </h3>
 
-            </motion.div>
+          <p className="mt-2 text-sm leading-6 text-gray-500">
 
-          ))}
+            History is securely stored and ready for
+            MongoDB or Firebase synchronization.
 
-        </div>
+          </p>
 
-      )}
+        </motion.div>
+
+      </section>
+
+      {/* ==========================================
+                HISTORY TABLE
+      ========================================== */}
+
+      <HistoryTable />
+
+      {/* ==========================================
+                INFORMATION
+      ========================================== */}
+
+      <motion.section
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ delay: .2 }}
+  className="
+  rounded-[30px]
+  border
+  border-[var(--border-color)]
+  bg-[var(--card-bg)]
+  p-6
+  shadow-[var(--shadow)]
+  "
+>
+
+  <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+
+    How History Works
+
+  </h2>
+
+  <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--text-secondary)]">
+
+    Every successful AI detection stores mood, confidence,
+    recommendation, date and time. These records help analyse
+    emotional trends and provide personalized music suggestions.
+
+  </p>
+
+  <div className="mt-6 grid gap-4 md:grid-cols-3">
+
+    {[
+      {
+        title: "Mood Tracking",
+        desc: "Monitor emotional changes over time.",
+      },
+      {
+        title: "AI Accuracy",
+        desc: "Review confidence and prediction quality.",
+      },
+      {
+        title: "Smart Music",
+        desc: "Play songs based on detected mood.",
+      },
+    ].map((item) => (
+
+      <motion.div
+        key={item.title}
+        whileHover={{ y: -3 }}
+        className="
+        rounded-2xl
+        border
+        border-[var(--border-color)]
+        bg-[var(--glass)]
+        p-5
+        backdrop-blur-xl
+        "
+      >
+
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+
+          {item.title}
+
+        </h3>
+
+        <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+
+          {item.desc}
+
+        </p>
+
+      </motion.div>
+
+    ))}
+
+  </div>
+
+</motion.section>
 
     </div>
   );

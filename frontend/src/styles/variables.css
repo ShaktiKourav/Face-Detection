@@ -1,0 +1,181 @@
+/* ==========================================================
+   AI MOODSENSE
+   THEME VARIABLES
+========================================================== */
+
+/* ==========================================================
+   LIGHT THEME
+========================================================== */
+
+:root {
+
+  /* Background */
+
+  --bg-color: #f5f7fb;
+  --surface: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --glass: rgba(255, 255, 255, 0.72);
+
+  /* Sidebar */
+
+  --sidebar-bg: rgba(255, 255, 255, 0.9);
+  --sidebar-text: #1f2937;
+  --sidebar-hover: rgba(168, 85, 247, 0.12);
+
+  /* Navbar */
+
+  --navbar-bg: rgba(255,255,255,.78);
+
+  /* Text */
+
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+
+  /* Brand */
+
+  --primary: #ec4899;
+  --secondary: #8b5cf6;
+  --accent: #6366f1;
+
+  /* Status */
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+
+  /* Border */
+
+  --border-color: rgba(15, 23, 42, 0.08);
+
+  /* Hover */
+
+  --hover: rgba(236,72,153,.08);
+
+  /* Radius */
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+
+  /* Layout */
+
+  --navbar-height: 68px;
+  --sidebar-width: 240px;
+  --content-gap: 18px;
+
+  /* Shadow */
+
+  --shadow:
+      0 10px 35px rgba(99,102,241,.08);
+
+  --shadow-lg:
+      0 20px 60px rgba(168,85,247,.15);
+
+  /* Glow */
+
+  --pink-glow:
+      0 0 40px rgba(236,72,153,.18);
+
+  --purple-glow:
+      0 0 40px rgba(139,92,246,.18);
+
+}
+
+/* ==========================================================
+   DARK THEME
+========================================================== */
+
+[data-theme="dark"] {
+
+  /* Background */
+
+  --bg-color: #09090b;
+  --surface: #111114;
+  --card-bg: rgba(18,18,25,.95);
+  --glass: rgba(17,17,24,.88);
+
+  /* Sidebar */
+
+  --sidebar-bg: rgba(12,12,18,.98);
+  --sidebar-text: #f3f4f6;
+  --sidebar-hover: rgba(139,92,246,.18);
+
+  /* Navbar */
+
+  --navbar-bg: rgba(14,14,20,.94);
+
+  /* Text */
+
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+
+  /* Brand */
+
+  --primary: #ec4899;
+  --secondary: #8b5cf6;
+  --accent: #6366f1;
+
+  /* Status */
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #60a5fa;
+
+  /* Border */
+
+  --border-color: rgba(255,255,255,.08);
+
+  /* Hover */
+
+  --hover: rgba(255,255,255,.05);
+
+  /* Radius */
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 30px;
+
+  /* Layout */
+
+  --navbar-height: 68px;
+  --sidebar-width: 240px;
+  --content-gap: 18px;
+
+  /* Shadow */
+
+  --shadow:
+      0 10px 35px rgba(0,0,0,.45);
+
+  --shadow-lg:
+      0 20px 60px rgba(0,0,0,.65);
+
+  /* Glow */
+
+  --pink-glow:
+      0 0 45px rgba(236,72,153,.28);
+
+  --purple-glow:
+      0 0 45px rgba(139,92,246,.30);
+
+}
+
+/* ==========================================================
+   OPTIONAL UTILITIES
+========================================================== */
+
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after{
+
+  transition:
+      background-color .25s ease,
+      color .25s ease,
+      border-color .25s ease,
+      box-shadow .25s ease;
+
+}

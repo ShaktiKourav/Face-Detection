@@ -1,0 +1,422 @@
+/* ==========================================================
+   AI MOODSENSE
+   GLOBAL STYLES
+========================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================
+   RESET
+========================================================== */
+
+*,
+*::before,
+*::after{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+  font-size:15px;
+}
+
+body{
+
+  font-family:"Outfit",sans-serif;
+
+  background:var(--bg-color);
+
+  color:var(--text-primary);
+
+  transition:
+    background .35s ease,
+    color .35s ease;
+
+  overflow-x:hidden;
+
+  min-height:100vh;
+
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+
+}
+
+#root{
+
+  min-height:100vh;
+
+}
+
+/* ==========================================================
+   TYPOGRAPHY
+========================================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+
+  color:var(--text-primary);
+
+  line-height:1.25;
+
+  font-weight:700;
+
+}
+
+h1{
+
+  font-size:2rem;
+
+}
+
+h2{
+
+  font-size:1.55rem;
+
+}
+
+h3{
+
+  font-size:1.25rem;
+
+}
+
+h4{
+
+  font-size:1.05rem;
+
+}
+
+p{
+
+  color:var(--text-secondary);
+
+  font-size:.92rem;
+
+  line-height:1.65;
+
+}
+
+small{
+
+  color:var(--text-secondary);
+
+  font-size:.78rem;
+
+}
+
+/* ==========================================================
+   LINK
+========================================================== */
+
+a{
+
+  text-decoration:none;
+
+  color:inherit;
+
+}
+
+/* ==========================================================
+   IMAGE
+========================================================== */
+
+img{
+
+  max-width:100%;
+
+  display:block;
+
+}
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+button,
+input,
+textarea,
+select{
+
+  font:inherit;
+
+  outline:none;
+
+  border:none;
+
+  background:none;
+
+}
+
+button{
+
+  cursor:pointer;
+
+}
+
+input,
+textarea,
+select{
+
+  color:var(--text-primary);
+
+}
+
+/* ==========================================================
+   LIST
+========================================================== */
+
+ul{
+
+  list-style:none;
+
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+::-webkit-scrollbar{
+
+  width:8px;
+
+}
+
+::-webkit-scrollbar-track{
+
+  background:transparent;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+  border-radius:999px;
+
+  background:linear-gradient(
+      to bottom,
+      #ec4899,
+      #8b5cf6
+  );
+
+}
+
+/* ==========================================================
+   SELECTION
+========================================================== */
+
+::selection{
+
+  background:rgba(168,85,247,.25);
+
+}
+
+/* ==========================================================
+   GLASS
+========================================================== */
+
+.glass{
+
+  background:var(--glass);
+
+  backdrop-filter:blur(18px);
+
+  -webkit-backdrop-filter:blur(18px);
+
+  border:1px solid var(--border-color);
+
+  box-shadow:var(--shadow);
+
+}
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.card{
+
+  background:var(--card-bg);
+
+  border:1px solid var(--border-color);
+
+  border-radius:22px;
+
+  box-shadow:var(--shadow);
+
+  transition:.3s;
+
+}
+
+.card:hover{
+
+  transform:translateY(-4px);
+
+}
+
+/* ==========================================================
+   GRADIENT TEXT
+========================================================== */
+
+.gradient-text{
+
+  background:linear-gradient(
+      90deg,
+      var(--primary),
+      var(--secondary)
+  );
+
+  --webkit-background-clip:text;
+
+  -webkit-text-fill-color:transparent;
+
+}
+
+/* ==========================================================
+   LOADER
+========================================================== */
+
+.loader{
+
+  width:46px;
+
+  height:46px;
+
+  border-radius:50%;
+
+  border:4px solid rgba(168,85,247,.15);
+
+  border-top-color:var(--primary);
+
+  animation:spin .8s linear infinite;
+
+}
+
+@keyframes spin{
+
+  to{
+
+    transform:rotate(360deg);
+
+  }
+
+}
+
+/* ==========================================================
+   FADE
+========================================================== */
+
+.fade{
+
+  animation:fade .45s ease;
+
+}
+
+@keyframes fade{
+
+  from{
+
+    opacity:0;
+
+    transform:translateY(15px);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:translateY(0);
+
+  }
+
+}
+
+/* ==========================================================
+   FLOAT
+========================================================== */
+
+.float{
+
+  animation:float 5s ease infinite;
+
+}
+
+@keyframes float{
+
+  0%,100%{
+
+    transform:translateY(0);
+
+  }
+
+  50%{
+
+    transform:translateY(-10px);
+
+  }
+
+}
+
+/* ==========================================================
+   FOCUS
+========================================================== */
+
+input:focus,
+textarea:focus,
+select:focus{
+
+  outline:none;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:1200px){
+
+  html{
+
+    font-size:14.5px;
+
+  }
+
+}
+
+@media(max-width:992px){
+
+  html{
+
+    font-size:14px;
+
+  }
+
+}
+
+@media(max-width:768px){
+
+  html{
+
+    font-size:13.5px;
+
+  }
+
+}
+
+@media(max-width:480px){
+
+  html{
+
+    font-size:13px;
+
+  }
+
+}

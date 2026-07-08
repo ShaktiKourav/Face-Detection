@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 import {
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
   signInWithPopup,
 } from "firebase/auth";
 
@@ -11,6 +12,7 @@ import { auth, provider } from "../firebase";
 
 import {
   MdFaceRetouchingNatural,
+  MdPerson,
   MdEmail,
   MdLock,
   MdVisibility,
@@ -25,13 +27,13 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-const Login = () => {
+const Register = () => {
 
   const navigate = useNavigate();
 
-  /* =====================================================
-                      STATES
-  ===================================================== */
+  /* ==================================================
+                    STATES
+  ================================================== */
 
   const [loading, setLoading] = useState(false);
 
@@ -41,21 +43,28 @@ const Login = () => {
   const [showPassword, setShowPassword] =
     useState(false);
 
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
+
   const [form, setForm] = useState({
+
+    name: "",
 
     email: "",
 
     password: "",
 
-    remember: false,
+    confirmPassword: "",
+
+    terms: false,
 
   });
 
   const [errors, setErrors] = useState({});
 
-  /* =====================================================
+  /* ==================================================
                     INPUT CHANGE
-  ===================================================== */
+  ================================================== */
 
   const handleChange = (e) => {
 
@@ -67,11 +76,14 @@ const Login = () => {
     } = e.target;
 
     setForm((prev) => ({
+
       ...prev,
+
       [name]:
         type === "checkbox"
           ? checked
           : value,
+
     }));
 
     setErrors((prev) => ({
@@ -81,13 +93,19 @@ const Login = () => {
 
   };
 
-  /* =====================================================
+  /* ==================================================
                     VALIDATION
-  ===================================================== */
+  ================================================== */
 
   const validate = () => {
 
     const newErrors = {};
+
+    if (!form.name.trim()) {
+
+      newErrors.name = "Full name is required";
+
+    }
 
     if (!form.email.trim()) {
 
@@ -99,6 +117,35 @@ const Login = () => {
 
       newErrors.password = "Password is required";
 
+    } else if (form.password.length < 6) {
+
+      newErrors.password =
+        "Password must contain at least 6 characters";
+
+    }
+
+    if (!form.confirmPassword.trim()) {
+
+      newErrors.confirmPassword =
+        "Confirm your password";
+
+    }
+
+    if (
+      form.password !==
+      form.confirmPassword
+    ) {
+
+      newErrors.confirmPassword =
+        "Passwords do not match";
+
+    }
+
+    if (!form.terms) {
+
+      newErrors.terms =
+        "Please accept Terms & Conditions";
+
     }
 
     setErrors(newErrors);
@@ -107,15 +154,18 @@ const Login = () => {
 
   };
 
-  /* =====================================================
+  /* ==================================================
                     SAVE USER
-  ===================================================== */
+  ================================================== */
 
-  const saveUser = async (user) => {
+  const saveUser = async (user, name) => {
 
     const token = await user.getIdToken();
 
-    localStorage.setItem("token", token);
+    localStorage.setItem(
+      "token",
+      token
+    );
 
     localStorage.setItem(
       "isLoggedIn",
@@ -135,7 +185,7 @@ const Login = () => {
 
         name:
           user.displayName ||
-          "AI User",
+          name,
 
         email: user.email,
 
@@ -143,7 +193,7 @@ const Login = () => {
           user.photoURL ||
 
           `https://ui-avatars.com/api/?background=a855f7&color=ffffff&name=${encodeURIComponent(
-            user.displayName || "User"
+            user.displayName || name
           )}`,
 
       })
@@ -151,11 +201,11 @@ const Login = () => {
 
   };
 
-  /* =====================================================
-                    EMAIL LOGIN
-  ===================================================== */
+  /* ==================================================
+                  CREATE ACCOUNT
+  ================================================== */
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
 
     e.preventDefault();
 
@@ -166,7 +216,7 @@ const Login = () => {
     try {
 
       const result =
-        await signInWithEmailAndPassword(
+        await createUserWithEmailAndPassword(
 
           auth,
 
@@ -176,7 +226,17 @@ const Login = () => {
 
         );
 
-      await saveUser(result.user);
+      await updateProfile(
+        result.user,
+        {
+          displayName: form.name,
+        }
+      );
+
+      await saveUser(
+        result.user,
+        form.name
+      );
 
       navigate("/dashboard");
 
@@ -192,11 +252,11 @@ const Login = () => {
 
   };
 
-  /* =====================================================
-                    GOOGLE LOGIN
-  ===================================================== */
+  /* ==================================================
+                  GOOGLE REGISTER
+  ================================================== */
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleSignup = async () => {
 
     setGoogleLoading(true);
 
@@ -208,7 +268,10 @@ const Login = () => {
           provider
         );
 
-      await saveUser(result.user);
+      await saveUser(
+        result.user,
+        result.user.displayName
+      );
 
       navigate("/dashboard");
 
@@ -224,9 +287,9 @@ const Login = () => {
 
   };
 
-  /* =====================================================
-                    JSX
-  ===================================================== */
+  /* ==================================================
+                      JSX START
+  ================================================== */
 
   return (
 
@@ -246,7 +309,7 @@ duration-300
 "
 >
 
-{/* ================= Background ================= */}
+{/* Background */}
 
 <div className="absolute inset-0 overflow-hidden">
 
@@ -256,13 +319,7 @@ duration-300
 
 <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-cyan-400/10 blur-[120px]" />
 
-<div className="absolute inset-0 opacity-[0.03]
-[background-image:linear-gradient(to_right,#999_1px,transparent_1px),linear-gradient(to_bottom,#999_1px,transparent_1px)]
-[background-size:42px_42px]" />
-
 </div>
-
-{/* ================= Main Card ================= */}
 
 <motion.div
 
@@ -295,12 +352,9 @@ backdrop-blur-2xl
 shadow-[var(--shadow-lg)]
 lg:grid-cols-2
 "
-
 >
 
-{/* =====================================================
-                    LEFT PANEL
-===================================================== */}
+{/* ================= LEFT PANEL ================= */}
 
 <div
 className="
@@ -321,18 +375,7 @@ lg:justify-between
 
 <div>
 
-<div
-className="
-flex
-h-20
-w-20
-items-center
-justify-center
-rounded-full
-bg-white
-shadow-2xl
-"
->
+<div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-xl">
 
 <MdFaceRetouchingNatural
 size={54}
@@ -343,15 +386,15 @@ className="text-pink-500"
 
 <h1 className="mt-6 text-4xl font-bold">
 
-AI MoodSense
+Create Your Account
 
 </h1>
 
 <p className="mt-4 max-w-sm text-[15px] leading-7 text-pink-100">
 
-Experience premium AI powered Face Detection,
-Emotion Recognition and Smart Music
-Recommendation in one intelligent dashboard.
+Join AI MoodSense and experience premium face
+recognition, emotion detection and smart music
+recommendation powered by Artificial Intelligence.
 
 </p>
 
@@ -360,11 +403,11 @@ Recommendation in one intelligent dashboard.
 <div className="space-y-4">
 
 {[
-"Real-Time Face Detection",
-"AI Mood Prediction",
-"Smart Music Recommendation",
-"Firebase Secure Login",
-"Detection History",
+"AI Face Detection",
+"Emotion Recognition",
+"Music Recommendation",
+"Cloud Authentication",
+"History Tracking",
 "Dark & Light Theme",
 ].map((item)=>(
 
@@ -373,9 +416,7 @@ key={item}
 className="flex items-center gap-3"
 >
 
-<FiCheckCircle
-size={20}
-/>
+<FiCheckCircle size={20}/>
 
 <span className="text-[15px]">
 
@@ -391,45 +432,17 @@ size={20}
 
 </div>
 
-{/* ================= RIGHT PANEL START ================= */}
+{/* RIGHT PANEL START */}
 
-<div
-className="
-flex
-items-center
-justify-center
-p-6
-md:p-8
-xl:p-10
-"
->
+<div className="flex items-center justify-center p-6 md:p-8 xl:p-10">
 
 <div className="w-full max-w-md">
 
-{/* Mobile Logo */}
-
 <div className="mb-6 text-center lg:hidden">
 
-<div
-className="
-mx-auto
-flex
-h-20
-w-20
-items-center
-justify-center
-rounded-full
-bg-gradient-to-r
-from-pink-500
-to-violet-600
-text-white
-shadow-xl
-"
->
+<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-violet-600 text-white">
 
-<MdFaceRetouchingNatural
-size={50}
-/>
+<MdFaceRetouchingNatural size={50}/>
 
 </div>
 
@@ -437,20 +450,81 @@ size={50}
 
 <h2 className="text-3xl font-bold text-[var(--text-primary)]">
 
-Welcome Back 👋
+Create Account
 
 </h2>
 
 <p className="mt-2 text-sm text-[var(--text-secondary)]">
 
-Sign in to continue to your premium AI dashboard.
+Create your AI MoodSense account in less than one minute.
 
 </p>
 
 <form
-onSubmit={handleSubmit}
+onSubmit={handleRegister}
 className="mt-8 space-y-5"
 >
+          {/* ================= FULL NAME ================= */}
+
+          <div>
+
+            <label className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+              Full Name
+            </label>
+
+            <div
+              className="
+              flex
+              h-12
+              items-center
+              rounded-xl
+              border
+              border-[var(--border-color)]
+              bg-[var(--card-bg)]
+              px-4
+              transition-all
+              duration-300
+              focus-within:border-pink-500
+              focus-within:ring-4
+              focus-within:ring-pink-500/10
+              "
+            >
+
+              <MdPerson
+                className="text-pink-500"
+                size={20}
+              />
+
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter your full name"
+                value={form.name}
+                onChange={handleChange}
+                className="
+                ml-3
+                w-full
+                bg-transparent
+                text-sm
+                text-[var(--text-primary)]
+                placeholder:text-[var(--text-secondary)]
+                "
+              />
+
+            </div>
+
+            {errors.name && (
+
+              <p className="mt-2 text-xs text-red-500">
+
+                {errors.name}
+
+              </p>
+
+            )}
+
+          </div>
+
           {/* ================= EMAIL ================= */}
 
           <div>
@@ -550,7 +624,7 @@ className="mt-8 space-y-5"
                     : "password"
                 }
                 name="password"
-                placeholder="Enter your password"
+                placeholder="Create password"
                 value={form.password}
                 onChange={handleChange}
                 className="
@@ -568,11 +642,7 @@ className="mt-8 space-y-5"
                 onClick={() =>
                   setShowPassword(!showPassword)
                 }
-                className="
-                text-[var(--text-secondary)]
-                transition
-                hover:text-pink-500
-                "
+                className="text-[var(--text-secondary)] hover:text-pink-500"
               >
 
                 {showPassword ? (
@@ -597,52 +667,126 @@ className="mt-8 space-y-5"
 
           </div>
 
-          {/* ================= REMEMBER ================= */}
+          {/* ================= CONFIRM PASSWORD ================= */}
 
-          <div className="flex items-center justify-between">
+          <div>
+
+            <label className="mb-2 block text-sm font-semibold text-[var(--text-primary)]">
+              Confirm Password
+            </label>
+
+            <div
+              className="
+              flex
+              h-12
+              items-center
+              rounded-xl
+              border
+              border-[var(--border-color)]
+              bg-[var(--card-bg)]
+              px-4
+              transition-all
+              duration-300
+              focus-within:border-pink-500
+              focus-within:ring-4
+              focus-within:ring-pink-500/10
+              "
+            >
+
+              <MdLock
+                className="text-pink-500"
+                size={20}
+              />
+
+              <input
+                type={
+                  showConfirmPassword
+                    ? "text"
+                    : "password"
+                }
+                name="confirmPassword"
+                placeholder="Confirm password"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                className="
+                ml-3
+                w-full
+                bg-transparent
+                text-sm
+                text-[var(--text-primary)]
+                placeholder:text-[var(--text-secondary)]
+                "
+              />
+
+              <button
+                type="button"
+                onClick={() =>
+                  setShowConfirmPassword(
+                    !showConfirmPassword
+                  )
+                }
+                className="text-[var(--text-secondary)] hover:text-pink-500"
+              >
+
+                {showConfirmPassword ? (
+                  <MdVisibilityOff size={20} />
+                ) : (
+                  <MdVisibility size={20} />
+                )}
+
+              </button>
+
+            </div>
+
+            {errors.confirmPassword && (
+
+              <p className="mt-2 text-xs text-red-500">
+
+                {errors.confirmPassword}
+
+              </p>
+
+            )}
+
+          </div>
+
+          {/* ================= TERMS ================= */}
+
+          <div>
 
             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
 
               <input
                 type="checkbox"
-                name="remember"
-                checked={form.remember}
+                name="terms"
+                checked={form.terms}
                 onChange={handleChange}
                 className="h-4 w-4 accent-pink-500"
               />
 
-              Remember Me
+              I agree to the Terms & Conditions
 
             </label>
 
-            <Link
-              to="/forgot-password"
-              className="
-              text-sm
-              font-medium
-              text-pink-500
-              transition
-              hover:text-violet-600
-              "
-            >
+            {errors.terms && (
 
-              Forgot Password?
+              <p className="mt-2 text-xs text-red-500">
 
-            </Link>
+                {errors.terms}
+
+              </p>
+
+            )}
 
           </div>
 
-          {/* ================= LOGIN BUTTON ================= */}
+          {/* ================= CREATE ACCOUNT ================= */}
 
           <motion.button
 
-            whileHover={{
-              scale: 1.01,
-            }}
+            whileHover={{ scale: 1.01 }}
 
-            whileTap={{
-              scale: .98,
-            }}
+            whileTap={{ scale: .98 }}
 
             disabled={loading}
 
@@ -675,7 +819,7 @@ className="mt-8 space-y-5"
 
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
 
-                Signing In...
+                Creating Account...
 
               </>
 
@@ -683,7 +827,7 @@ className="mt-8 space-y-5"
 
               <>
 
-                Login
+                Create Account
 
                 <MdOutlineArrowForward size={20} />
 
@@ -697,31 +841,29 @@ className="mt-8 space-y-5"
 
           <div className="flex items-center gap-4">
 
-            <div className="h-px flex-1 bg-[var(--border-color)]" />
+            <div className="h-px flex-1 bg-[var(--border-color)]"></div>
 
             <span className="text-xs text-[var(--text-secondary)]">
+
               OR
+
             </span>
 
-            <div className="h-px flex-1 bg-[var(--border-color)]" />
+            <div className="h-px flex-1 bg-[var(--border-color)]"></div>
 
           </div>
 
-          {/* ================= GOOGLE LOGIN ================= */}
+          {/* ================= GOOGLE SIGNUP ================= */}
 
           <motion.button
 
-            whileHover={{
-              scale: 1.01,
-            }}
+            whileHover={{ scale: 1.01 }}
 
-            whileTap={{
-              scale: .98,
-            }}
+            whileTap={{ scale: .98 }}
 
             disabled={googleLoading}
 
-            onClick={handleGoogleLogin}
+            onClick={handleGoogleSignup}
 
             type="button"
 
@@ -769,7 +911,7 @@ className="mt-8 space-y-5"
             )}
 
           </motion.button>
-                    {/* ================= SECURITY CARD ================= */}
+                  {/* ================= SECURITY CARD ================= */}
 
           <div
             className="
@@ -806,12 +948,13 @@ className="mt-8 space-y-5"
               <div>
 
                 <h4 className="text-sm font-semibold text-[var(--text-primary)]">
-                  Secure Authentication
+                  Secure Registration
                 </h4>
 
                 <p className="mt-1 text-xs leading-6 text-[var(--text-secondary)]">
-                  Your account is protected using Firebase Authentication.
-                  Login credentials remain encrypted and secure.
+                  Your account is protected with Firebase Authentication.
+                  All credentials are securely encrypted and your personal
+                  information remains safe.
                 </p>
 
               </div>
@@ -820,16 +963,16 @@ className="mt-8 space-y-5"
 
           </div>
 
-          {/* ================= CREATE ACCOUNT ================= */}
+          {/* ================= LOGIN LINK ================= */}
 
           <div className="pt-1 text-center">
 
             <p className="text-sm text-[var(--text-secondary)]">
 
-              Don't have an account?
+              Already have an account?
 
               <Link
-                to="/register"
+                to="/login"
                 className="
                 ml-2
                 font-semibold
@@ -838,7 +981,9 @@ className="mt-8 space-y-5"
                 hover:text-violet-600
                 "
               >
-                Create Account
+
+                Sign In
+
               </Link>
 
             </p>
@@ -855,8 +1000,8 @@ className="mt-8 space-y-5"
 
 </div>
 
-
   );
+
 };
 
-export default Login;
+export default Register;

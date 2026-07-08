@@ -1,55 +1,94 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AppRoutes from "./routes/AppRoutes";
 
-// Layout
-import MainLayout from "./layouts/MainLayout";
-
-// Pages
-import Login from "./pages/Login";
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import FaceDetection from "./pages/FaceDetection";
-import Music from "./pages/Music";
-import History from "./pages/History";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+import "./styles/variables.css";
+import "./styles/globals.css";
+import "./styles/responsive.css";
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="layout">
-        {/* Background */}
-        <div className="layout__background">
-          <div className="gradient gradient--one"></div>
-          <div className="gradient gradient--two"></div>
-          <div className="noise"></div>
-        </div>
+    <div
+      className="
+      min-h-screen
+      bg-[var(--bg-color)]
+      text-[var(--text-primary)]
+      transition-all
+      duration-300
+      overflow-x-hidden
+    "
+    >
+      {/* ================= Background ================= */}
 
-        <div className="layout__content">
-          <Routes>
-            {/* Default */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+      <div className="fixed inset-0 -z-50 overflow-hidden">
+        {/* Pink Glow */}
 
-            {/* Login */}
-            <Route path="/login" element={<Login />} />
+        <div
+          className="
+          absolute
+          -top-52
+          -left-52
+          h-[520px]
+          w-[520px]
+          rounded-full
+          bg-pink-500/15
+          blur-[140px]
+        "
+        />
 
-            {/* Dashboard Layout */}
-            <Route element={<MainLayout />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/face-detection" element={<FaceDetection />} />
-              <Route path="/music" element={<Music />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-            </Route>
+        {/* Purple Glow */}
 
-            {/* 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
+        <div
+          className="
+          absolute
+          right-[-180px]
+          top-1/3
+          h-[500px]
+          w-[500px]
+          rounded-full
+          bg-violet-600/15
+          blur-[140px]
+        "
+        />
+
+        {/* Blue Glow */}
+
+        <div
+          className="
+          absolute
+          bottom-[-180px]
+          left-1/3
+          h-[420px]
+          w-[420px]
+          rounded-full
+          bg-cyan-500/10
+          blur-[120px]
+        "
+        />
+
+        {/* Grid */}
+
+        <div
+          className="
+          absolute
+          inset-0
+          opacity-[0.03]
+          [background-image:linear-gradient(to_right,#999_1px,transparent_1px),linear-gradient(to_bottom,#999_1px,transparent_1px)]
+          [background-size:45px_45px]
+        "
+        />
       </div>
-    </BrowserRouter>
+
+      {/* ================= Main ================= */}
+
+      <main
+        className="
+        relative
+        z-10
+        min-h-screen
+      "
+      >
+        <AppRoutes />
+      </main>
+    </div>
   );
 }
 

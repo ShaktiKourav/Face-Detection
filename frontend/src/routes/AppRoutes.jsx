@@ -1,62 +1,44 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-import App from "../App";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "../pages/Login";
-import Home from "../pages/Home";
 import Dashboard from "../pages/Dashboard";
-import FaceDetection from "../pages/FaceDetection";
-import History from "../pages/History";
+import Detection from "../pages/Detection";
 import Music from "../pages/Music";
-import Profile from "../pages/Profile";
+import History from "../pages/History";
 import Setting from "../pages/Setting";
 import NotFound from "../pages/NotFound";
-
-const PrivateRoute = ({ children }) => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn");
-
-  return isLoggedIn ? children : <Navigate to="/" replace />;
-};
+import Register from "../pages/Register";
+import DashboardLayout from "../layouts/DashboardLayout";
+import ProtectedRoute from "./ProtectedRoute";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
+      {/* ================= Login ================= */}
+      <Route path="/" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-        {/* Login */}
-        <Route path="/" element={<Login />} />
+      {/* ============== Protected Routes ============== */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/detection" element={<Detection />} />
+        <Route path="/music" element={<Music />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/setting" element={<Setting />} />
+      </Route>
 
-        {/* Protected Routes */}
-        <Route
-          element={
-            <PrivateRoute>
-              <App />
-            </PrivateRoute>
-          }
-        >
-          <Route path="/home" element={<Home />} />
+      {/* ============== Redirect ============== */}
+      <Route path="/home" element={<Navigate to="/dashboard" replace />} />
 
-          <Route path="/dashboard" element={<Dashboard />} />
-
-          <Route
-            path="/face-detection"
-            element={<FaceDetection />}
-          />
-
-          <Route path="/history" element={<History />} />
-
-          <Route path="/music" element={<Music />} />
-
-          <Route path="/profile" element={<Profile />} />
-
-          <Route path="/setting" element={<Setting />} />
-        </Route>
-
-        {/* 404 */}
-        <Route path="*" element={<NotFound />} />
-
-      </Routes>
-    </BrowserRouter>
+      {/* ============== 404 ============== */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 

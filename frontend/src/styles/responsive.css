@@ -1,0 +1,76 @@
+/* ==========================================================
+   AI MOODSENSE
+   RESPONSIVE UTILITIES
+========================================================== */
+
+/* ==========================
+   Large Laptop
+========================== */
+
+@media (max-width: 1440px) {
+
+  .page-container {
+    padding: 1.25rem;
+  }
+
+}
+
+/* ==========================
+   Laptop
+========================== */
+
+@media (max-width: 1280px) {
+
+  .page-container {
+    padding: 1rem;
+  }
+
+}
+
+/* ==========================
+   Tablet
+========================== */
+
+@media (max-width: 1024px) {
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .page-container {
+    padding: .9rem;
+  }
+
+}
+
+/* ==========================
+   Mobile
+========================== */
+
+@media (max-width: 768px) {
+
+  .page-container {
+    padding: .75rem;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: block !important;
+  }
+
+}
+
+/* ==========================
+   Small Mobile
+========================== */
+
+@media (max-width: 480px) {
+
+  .page-container {
+    padding: .6rem;
+  }
+
+}
