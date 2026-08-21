@@ -1,9 +1,9 @@
-import Detection from "../models/Detection.model.js";import fs from "fs";
+import Detection from "../models/Detection.model.js";
+import fs from "fs";
 import path from "path";
 import { v4 as uuid } from "uuid";
 import { detectEmotion } from "../services/ai.service.js";
-import Detection from "../models/Detection.model.js";
-import { detectMood } from "../services/mood.service.js";
+import { musicLibrary } from "../data/musicLibrary.js";
 
 /* ==========================================================
    Save Face Detection
@@ -18,6 +18,7 @@ export const saveDetection = async (req, res) => {
       songTitle,
       artist,
       audio,
+      songImage,
       image,
       cameraStatus,
     } = req.body;
@@ -30,6 +31,7 @@ export const saveDetection = async (req, res) => {
       songTitle,
       artist,
       audio,
+      songImage,
       image,
       cameraStatus,
     });
@@ -196,13 +198,18 @@ export const getMoodRecommendation = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      mood: latest.mood,
-      songTitle: latest.songTitle,
-      artist: latest.artist,
-      audio: latest.audio,
-    });
+ res.status(200).json({
+  success: true,
+
+  mood: latest.mood,
+
+  song: {
+    title: latest.songTitle,
+    artist: latest.artist,
+    audio: latest.audio,
+    image: latest.songImage,
+  },
+});
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -219,37 +226,12 @@ export const getMoodRecommendation = async (req, res) => {
 export const captureDetection = async (req, res) => {
   try {
     const { image, personName = "Unknown" } = req.body;
-
-  const user = req.user;
-
-if (user.currentMood !== mood) {
-
-    user.currentMood = mood;
-
-    await user.save();
-
-    await Detection.create({
-
-        user: user._id,
-
-        personName,
-
-        mood,
-
-        confidence: aiResult.confidence,
-
-        songTitle: song.title,
-
-        artist: song.artist,
-
-        audio: song.audio,
-
-        image: imageUrl,
-
-        cameraStatus: "Online"
-
-    });
-
+    
+    if (!image) {
+  return res.status(400).json({
+    success: false,
+    message: "Image is required",
+  });
 }
 
     /* ===========================================
@@ -263,120 +245,160 @@ if (user.currentMood !== mood) {
 
     const buffer = Buffer.from(base64Data, "base64");
 
-    /* ===========================================
-       Upload Folder
-    =========================================== */
+ /* ===========================================
+   Upload Folder
+=========================================== */
 
-    const uploadDir = path.join(
-      process.cwd(),
-      "uploads",
-      "detections"
-    );
+const uploadDir = path.join(
+  process.cwd(),
+  "uploads",
+  "detections"
+);
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, {
-        recursive: true,
-      });
-    }
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, {
+    recursive: true,
+  });
+}
 
-    /* ===========================================
-       Save Image
-    =========================================== */
+/* ===========================================
+   Save Image
+=========================================== */
 
-    const fileName = `${uuid()}.jpg`;
+const fileName = `${uuid()}.jpg`;
 
-    const filePath = path.join(
-      uploadDir,
-      fileName
-    );
+const filePath = path.join(
+  uploadDir,
+  fileName
+);
 
-    fs.writeFileSync(filePath, buffer);
+console.log("Saving Image :", filePath);
 
-    const imageUrl = `/uploads/detections/${fileName}`;
+fs.writeFileSync(filePath, buffer);
 
-    /* ===========================================
-       AI Emotion Detection
-    =========================================== */
+console.log("Image Saved :", fs.existsSync(filePath));
 
-    const aiResult = await detectEmotion(filePath);
+const stats = fs.statSync(filePath);
 
-    /* ===========================================
-       Song Recommendation
-    =========================================== */
+console.log("================================");
+console.log("Current Dir :", process.cwd());
+console.log("Upload Dir  :", uploadDir);
+console.log("File Path   :", filePath);
+console.log("Exists      :", fs.existsSync(filePath));
+console.log("File Size   :", stats.size, "bytes");
+console.log("================================");
 
-    const mood = aiResult.emotion.toLowerCase();
+const imageUrl = `/uploads/detections/${fileName}`;
 
-    const songs = {
-      happy: {
-        title: "Happy Vibes",
-        artist: "AI Playlist",
-        audio: "/music/happy.mp3",
-      },
+/* ===========================================
+   AI Emotion Detection
+=========================================== */
 
-      sad: {
-        title: "Sad Evening",
-        artist: "AI Playlist",
-        audio: "/music/sad.mp3",
-      },
+const aiResult = await detectEmotion(filePath);
 
-      angry: {
-        title: "Relax Mind",
-        artist: "AI Playlist",
-        audio: "/music/angry.mp3",
-      },
+console.log("================================");
+console.log("AI Result :", aiResult);
+console.log("================================");
 
-      neutral: {
-        title: "Focus Mode",
-        artist: "AI Playlist",
-        audio: "/music/focus.mp3",
-      },
+if (!aiResult.success) {
+  return res.status(500).json({
+    success: false,
+    message: "Emotion detection failed",
+    aiResult,
+  });
+}
 
-      surprise: {
-        title: "Amazing Day",
-        artist: "AI Playlist",
-        audio: "/music/surprised.mp3",
-      },
+const mood =
+  (aiResult.emotion || "Neutral")
+    .charAt(0)
+    .toUpperCase() +
+  (aiResult.emotion || "Neutral")
+    .slice(1)
+    .toLowerCase();
 
-      fear: {
-        title: "Peaceful Mind",
-        artist: "AI Playlist",
-        audio: "/music/fear.mp3",
-      },
 
-      disgust: {
-        title: "Fresh Mood",
-        artist: "AI Playlist",
-        audio: "/music/disgust.mp3",
-      },
-    };
+/* ===========================================
+   Song Recommendation
+=========================================== */
 
-    const song =
-      songs[mood] || songs.neutral;
+// const songs = {
+//   happy: {
+//     title: "Happy Vibes",
+//     artist: "AI Playlist",
+//     audio: "/music/happy.mp3",
+//   },
 
-    /* ===========================================
-       Save Detection
-    =========================================== */
+//   sad: {
+//     title: "Sad Evening",
+//     artist: "AI Playlist",
+//     audio: "/music/sad.mp3",
+//   },
 
-    const detection =
-      await Detection.create({
-        user: req.user._id,
+//   angry: {
+//     title: "Relax Mind",
+//     artist: "AI Playlist",
+//     audio: "/music/angry.mp3",
+//   },
 
-        personName,
+//   neutral: {
+//     title: "Focus Mode",
+//     artist: "AI Playlist",
+//     audio: "/music/focus.mp3",
+//   },
 
-        mood,
+//   surprise: {
+//     title: "Amazing Day",
+//     artist: "AI Playlist",
+//     audio: "/music/surprised.mp3",
+//   },
 
-        confidence: aiResult.confidence,
+//   fear: {
+//     title: "Peaceful Mind",
+//     artist: "AI Playlist",
+//     audio: "/music/fear.mp3",
+//   },
 
-        songTitle: song.title,
+//   disgust: {
+//     title: "Fresh Mood",
+//     artist: "AI Playlist",
+//     audio: "/music/disgust.mp3",
+//   },
+// };
 
-        artist: song.artist,
 
-        audio: song.audio,
+const song =
+  musicLibrary[mood] ?? musicLibrary.Neutral;
 
-        image: imageUrl,
+/* ===========================================
+   Update User Mood
+=========================================== */
 
-        cameraStatus: "Online",
-      });
+const user = req.user;
+
+if (user.currentMood !== mood) {
+  user.currentMood = mood;
+  await user.save();
+}
+
+/* ===========================================
+   Save Detection
+=========================================== */
+
+const detection = await Detection.create({
+  user: req.user._id,
+  personName,
+  mood,
+  confidence: aiResult.confidence || 0,
+
+  songTitle: song.song,
+  artist: song.artist,
+  audio: song.file,
+  songImage: song.image,
+
+  image: imageUrl,
+
+  cameraStatus: "Online",
+});
 
     /* ===========================================
        Response
@@ -395,7 +417,12 @@ if (user.currentMood !== mood) {
 
       gender: aiResult.gender,
 
-      song,
+      song: {
+  title: song.song,
+  artist: song.artist,
+  audio: song.file,
+  image: song.image,
+},
 
       detection,
     });

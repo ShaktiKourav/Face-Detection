@@ -77,6 +77,124 @@ const ProfileCard = () => {
 
   }, []);
 
+/* ==========================================
+           photo handler
+  ========================================== */
+
+
+  const handlePhotoChange = (e) => {
+  const file = e.target.files?.[0];
+
+  if (!file) return;
+
+  // Sirf image allow
+  if (!file.type.startsWith("image/")) {
+    alert("Please select a valid image.");
+    return;
+  }
+
+  // File ko browser-readable URL/base64 me convert karo
+  const reader = new FileReader();
+
+  reader.onloadend = () => {
+    const photo = reader.result;
+
+    // UI update
+    setUser((prev) => ({
+      ...prev,
+      photo,
+    }));
+
+    // Existing user data preserve karo
+    const savedUser =
+      JSON.parse(localStorage.getItem("user")) || {};
+
+    const updatedUser = {
+      ...savedUser,
+      photo,
+    };
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(updatedUser)
+    );
+
+    // Navbar/profile jaise components ko update signal
+    window.dispatchEvent(
+      new Event("userUpdated")
+    );
+  };
+
+  reader.readAsDataURL(file);
+};
+
+/* ==========================================
+        PHONE NUMBER
+========================================== */
+
+const [editingPhone, setEditingPhone] = useState(false);
+const [phoneInput, setPhoneInput] = useState("");
+
+const handlePhoneChange = (e) => {
+  const value = e.target.value
+    .replace(/\D/g, "")
+    .slice(0, 10);
+
+  setPhoneInput(value);
+};
+
+const startPhoneEdit = () => {
+  setPhoneInput(String(user.phone || ""));
+  setEditingPhone(true);
+};
+
+const savePhone = () => {
+  const phone = phoneInput.trim();
+
+  if (phone.length !== 10) {
+    alert("Please enter exactly 10 digits.");
+    return;
+  }
+
+  try {
+    const savedUser =
+      JSON.parse(localStorage.getItem("user")) || {};
+
+    const updatedUser = {
+      ...savedUser,
+      phone: phone,
+    };
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(updatedUser)
+    );
+
+    // UI mein saved number show karo
+    setUser((prev) => ({
+      ...prev,
+      phone: phone,
+    }));
+
+    // Editing mode band
+    setEditingPhone(false);
+    setPhoneInput("");
+
+    // Dusre components ko update signal
+    window.dispatchEvent(
+      new Event("userUpdated")
+    );
+
+  } catch (error) {
+    console.error("Phone save error:", error);
+    alert("Phone number save nahi ho paya.");
+  }
+};
+
+const cancelPhoneEdit = () => {
+  setEditingPhone(false);
+  setPhoneInput("");
+};
   /* ==========================================
             UI
   ========================================== */
@@ -151,54 +269,73 @@ const ProfileCard = () => {
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
 
-        {/* Avatar */}
 
-        <div className="relative mx-auto lg:mx-0">
+{/* ================= AVATAR ================= */}
 
-          <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white shadow-xl">
+<div className="relative mx-auto lg:mx-0">
 
-            {user.photo ? (
+  {/* Hidden File Input */}
 
-              <img
-                src={user.photo}
-                alt={user.name}
-                className="h-full w-full object-cover"
-              />
+  <input
+    id="profile-photo"
+    type="file"
+    accept="image/*"
+    className="hidden"
+    onChange={handlePhotoChange}
+  />
 
-            ) : (
+  {/* Avatar */}
 
-              <div className="flex h-full w-full items-center justify-center bg-white text-pink-500">
+  <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white shadow-xl">
 
-                <MdPerson size={62} />
+    {user.photo ? (
 
-              </div>
+      <img
+        src={user.photo}
+        alt={user.name}
+        className="h-full w-full object-cover"
+      />
 
-            )}
+    ) : (
 
-          </div>
+      <div className="flex h-full w-full items-center justify-center bg-white text-pink-500">
 
-          <button
-            className="
-            absolute
-            bottom-1
-            right-1
-            flex
-            h-9
-            w-9
-            items-center
-            justify-center
-            rounded-full
-            bg-white
-            text-pink-600
-            shadow-lg
-            transition
-            hover:scale-105
-            "
-          >
-            <FaCamera size={14} />
-          </button>
+        <MdPerson size={62} />
 
-        </div>
+      </div>
+
+    )}
+
+  </div>
+
+  {/* Camera Button */}
+
+  <label
+    htmlFor="profile-photo"
+    className="
+      absolute
+      bottom-1
+      right-1
+      flex
+      h-9
+      w-9
+      cursor-pointer
+      items-center
+      justify-center
+      rounded-full
+      bg-white
+      text-pink-600
+      shadow-lg
+      transition
+      hover:scale-110
+      hover:bg-pink-50
+    "
+    title="Change profile photo"
+  >
+    <FaCamera size={14} />
+  </label>
+
+</div>
 
         {/* User Info */}
 
@@ -236,23 +373,136 @@ const ProfileCard = () => {
 
             </div>
 
-            <div className="flex items-start gap-3">
+{/* ================= PHONE ================= */}
 
-              <MdPhone size={20} />
+<div className="flex items-start gap-3">
 
-              <div>
+  <MdPhone size={20} />
 
-                <p className="text-[11px] uppercase tracking-wide text-white/70">
-                  Phone
-                </p>
+  <div className="min-w-0 flex-1">
 
-                <p className="text-sm font-medium">
-                  {user.phone || "Not Added"}
-                </p>
+    <p className="text-[11px] uppercase tracking-wide text-white/70">
+      Phone
+    </p>
 
-              </div>
+    {/* ================= NOT EDITING ================= */}
 
-            </div>
+    {!editingPhone ? (
+
+      <div className="mt-1 flex items-center gap-3">
+
+        <p className="text-sm font-medium">
+          {user.phone || "Not Added"}
+        </p>
+
+        <button
+          type="button"
+          onClick={startPhoneEdit}
+          className="
+            rounded-lg
+            bg-white
+            px-3
+            py-1.5
+            text-xs
+            font-semibold
+            text-pink-600
+            transition
+            hover:scale-105
+          "
+        >
+          {user.phone ? "Change" : "Add"}
+        </button>
+
+      </div>
+
+    ) : (
+
+      /* ================= EDITING ================= */
+
+      <div className="mt-2">
+
+        <div className="flex items-center gap-2">
+
+          <input
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={phoneInput}
+            onChange={handlePhoneChange}
+            placeholder="Enter 10 digit number"
+            maxLength={10}
+            autoFocus
+            className="
+              min-w-0
+              flex-1
+              rounded-lg
+              border
+              border-white/30
+              bg-white/10
+              px-3
+              py-2
+              text-sm
+              font-medium
+              text-white
+              outline-none
+              placeholder:text-white/50
+              focus:border-white
+              focus:bg-white/15
+            "
+          />
+
+          <button
+            type="button"
+            onClick={savePhone}
+            disabled={phoneInput.length !== 10}
+            className="
+              rounded-lg
+              bg-white
+              px-3
+              py-2
+              text-xs
+              font-semibold
+              text-pink-600
+              transition
+              hover:scale-105
+              disabled:cursor-not-allowed
+              disabled:opacity-50
+            "
+          >
+            Save
+          </button>
+
+        </div>
+
+        <div className="mt-2 flex items-center gap-2">
+
+          <span className="text-[10px] text-white/60">
+            {phoneInput.length}/10 digits
+          </span>
+
+          <button
+            type="button"
+            onClick={cancelPhoneEdit}
+            className="
+              text-[10px]
+              font-medium
+              text-white/70
+              underline
+              hover:text-white
+            "
+          >
+            Cancel
+          </button>
+
+        </div>
+
+      </div>
+
+    )}
+
+  </div>
+
+</div>
 
             <div className="flex items-start gap-3">
 
@@ -296,7 +546,7 @@ const ProfileCard = () => {
       </div>
 
     </div>
-    {/* ======================================
+ {/* ======================================
         STATISTICS
 ====================================== */}
 

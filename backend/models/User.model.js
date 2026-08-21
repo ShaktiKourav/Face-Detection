@@ -28,6 +28,20 @@ const userSchema = new mongoose.Schema(
       default: "",
     },
 
+    currentMood: {
+  type: String,
+  enum: [
+    "Happy",
+    "Sad",
+    "Angry",
+    "Neutral",
+    "Surprised",
+    "Fear",
+    "Disgust",
+  ],
+  default: "Neutral",
+},
+
     provider: {
       type: String,
       enum: ["local", "google"],
@@ -49,6 +63,20 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    currentMood: {
+  type: String,
+  enum: [
+    "Happy",
+    "Sad",
+    "Angry",
+    "Neutral",
+    "Fear",
+    "Disgust",
+    "Surprised",
+    "Romantic",
+  ],
+  default: "Neutral",
+},
   },
   {
     timestamps: true,
@@ -56,21 +84,15 @@ const userSchema = new mongoose.Schema(
 );
 
 
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) {
+    return;
+  }
 
-    if (!this.isModified("password"))
-        return ;
-
-    const salt = await bcrypt.genSalt(10);
-
-    this.password = await bcrypt.hash(
-        this.password,
-        salt
-    );
-
-   
-
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
+
 userSchema.methods.comparePassword =
 async function (enteredPassword) {
 

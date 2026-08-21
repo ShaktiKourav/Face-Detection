@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+ import { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import { motion } from "framer-motion";
 
@@ -12,7 +12,7 @@ import {
   MdVerified,
 } from "react-icons/md";
 
-const Camera = ({ onCapture }) => {
+const Camera = ({ onCapture, onStop }) => {
   /* =====================================================
       REFERENCES
   ===================================================== */
@@ -27,6 +27,7 @@ const Camera = ({ onCapture }) => {
 
   const [capturedImage, setCapturedImage] =
     useState(null);
+    const [showPreview, setShowPreview] = useState(false);
 
   const [loading, setLoading] =
     useState(false);
@@ -56,47 +57,76 @@ const Camera = ({ onCapture }) => {
   /* =====================================================
       STOP CAMERA
   ===================================================== */
+const stopCamera = () => {
+  setCameraOn(false);
+  setCapturedImage(null);
+  setShowPreview(false);
+  setStatus("Camera Offline");
 
-  const stopCamera = () => {
-    setCameraOn(false);
-    setCapturedImage(null);
-    setStatus("Camera Offline");
-  };
-
+  if (onStop) {
+    onStop();
+  }
+};
   /* =====================================================
       CAPTURE
   ===================================================== */
-
   const captureImage = async () => {
-    if (!webcamRef.current) return;
+  if (!webcamRef.current) {
+    console.log("❌ Webcam reference not found");
+    return;
+  }
 
+  try {
     setLoading(true);
+    setStatus("Capturing...");
 
-    const imageSrc =
-      webcamRef.current.getScreenshot();
+    const imageSrc = webcamRef.current.getScreenshot();
 
-    setCapturedImage(imageSrc);
+    console.log("📸 Screenshot:", imageSrc ? "SUCCESS" : "FAILED");
 
-    setStatus("Image Captured");
-
-    if (onCapture) {
-      await onCapture(imageSrc);
+    if (!imageSrc) {
+      console.error("❌ Camera screenshot is empty");
+      setStatus("Capture Failed");
+      return;
     }
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 1200);
-  };
+    // Show captured image immediately
+    setCapturedImage(imageSrc);
+    setShowPreview(true);
+    setStatus("Image Captured");
+
+    // Send image to Detection.jsx
+    if (onCapture) {
+      console.log("🚀 Sending image for AI detection...");
+      await onCapture(imageSrc);
+      console.log("✅ AI detection completed");
+    }
+
+  } catch (error) {
+    console.error("❌ Capture Error:", error);
+    setStatus("Detection Failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /* =====================================================
       RESET
   ===================================================== */
 
-  const resetCapture = () => {
-    setCapturedImage(null);
-    setStatus("Camera Ready");
-  };
+const resetCapture = () => {
+  // Reset captured image
+  setCapturedImage(null);
+  setShowPreview(false);
 
+  // Camera ready again
+  setStatus("Camera Ready");
+
+  // Parent ko reset signal
+  if (onCapture) {
+    onCapture(null);
+  }
+};
   /* =====================================================
       EFFECT
   ===================================================== */
@@ -397,8 +427,7 @@ const Camera = ({ onCapture }) => {
         {/* ==========================================
                     LIVE CAMERA
         ========================================== */}
-
-        {cameraOn && !capturedImage && (
+  {cameraOn && !capturedImage && (
           <Webcam
             ref={webcamRef}
             audio={false}
@@ -413,26 +442,22 @@ const Camera = ({ onCapture }) => {
           />
         )}
 
+
         {/* ==========================================
                     CAPTURED IMAGE
         ========================================== */}
-
-        {capturedImage && (
-          <img
-            src={capturedImage}
-            alt="Captured Face"
-            className="
-            h-[420px]
-            w-full
-            object-cover
-            "
-          />
-        )}
-
+{showPreview && capturedImage && (
+    <img
+        src={capturedImage}
+        alt="Captured"
+        className="h-[420px] w-full object-cover"
+    />
+)}
         {/* ==========================================
                 AI SCANNING OVERLAY
         ========================================== */}
 
+    
         {cameraOn && !capturedImage && (
           <>
             {/* Scanner Line */}
@@ -459,7 +484,6 @@ const Camera = ({ onCapture }) => {
               shadow-[0_0_25px_#ec4899]
               "
             />
-
             {/* Overlay */}
 
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20" />
@@ -720,7 +744,7 @@ const Camera = ({ onCapture }) => {
 
       {/* Capture */}
 
-      {cameraOn && !capturedImage && (
+     {cameraOn && !showPreview && (
         <motion.button
           whileHover={{
             y: -2,
@@ -754,7 +778,7 @@ const Camera = ({ onCapture }) => {
 
       {/* Capture Again */}
 
-      {capturedImage && (
+     {showPreview && (
         <motion.button
           whileHover={{
             y: -2,
@@ -1449,3 +1473,68 @@ const Camera = ({ onCapture }) => {
 };
 
 export default Camera;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

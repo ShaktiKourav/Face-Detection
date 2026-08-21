@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-
+import api from "../services/api";
 import {
   createUserWithEmailAndPassword,
   updateProfile,
   signInWithPopup,
 } from "firebase/auth";
-
 import { auth, provider } from "../firebase";
-
+import { useAuth } from "../context/AuthContext";
 import {
   MdFaceRetouchingNatural,
   MdPerson,
@@ -26,11 +25,10 @@ import {
   FiShield,
   FiCheckCircle,
 } from "react-icons/fi";
-
 const Register = () => {
 
   const navigate = useNavigate();
-
+  const { login } = useAuth();
   /* ==================================================
                     STATES
   ================================================== */
@@ -158,134 +156,145 @@ const Register = () => {
                     SAVE USER
   ================================================== */
 
-  const saveUser = async (user, name) => {
+  // const saveUser = async (user, name) => {
 
-    const token = await user.getIdToken();
+  //   const token = await user.getIdToken();
 
-    localStorage.setItem(
-      "token",
-      token
-    );
+  //   localStorage.setItem(
+  //     "token",
+  //     token
+  //   );
 
-    localStorage.setItem(
-      "isLoggedIn",
-      "true"
-    );
+  //   localStorage.setItem(
+  //     "isLoggedIn",
+  //     "true"
+  //   );
 
-    localStorage.setItem(
-      "theme",
-      localStorage.getItem("theme") || "light"
-    );
+  //   localStorage.setItem(
+  //     "theme",
+  //     localStorage.getItem("theme") || "light"
+  //   );
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
+  //   localStorage.setItem(
+  //     "user",
+  //     JSON.stringify({
 
-        uid: user.uid,
+  //       uid: user.uid,
 
-        name:
-          user.displayName ||
-          name,
+  //       name:
+  //         user.displayName ||
+  //         name,
 
-        email: user.email,
+  //       email: user.email,
 
-        photo:
-          user.photoURL ||
+  //       photo:
+  //         user.photoURL ||
 
-          `https://ui-avatars.com/api/?background=a855f7&color=ffffff&name=${encodeURIComponent(
-            user.displayName || name
-          )}`,
+  //         `https://ui-avatars.com/api/?background=a855f7&color=ffffff&name=${encodeURIComponent(
+  //           user.displayName || name
+  //         )}`,
 
-      })
-    );
+  //     })
+  //   );
 
-  };
+  // };
+
 
   /* ==================================================
                   CREATE ACCOUNT
   ================================================== */
 
   const handleRegister = async (e) => {
+  e.preventDefault();
 
-    e.preventDefault();
+  if (!validate()) return;
 
-    if (!validate()) return;
+  setLoading(true);
 
-    setLoading(true);
+  try {
 
-    try {
+    const { data } = await axios.post(
+      "/auth/register",
+      {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      }
+    );
 
-      const result =
-        await createUserWithEmailAndPassword(
 
-          auth,
+login(data.user, data.token);
 
-          form.email,
+navigate("/dashboard");
 
-          form.password
+    localStorage.setItem(
+      "isLoggedIn",
+      "true"
+    );
 
-        );
+  
+    localStorage.setItem(
+  "theme",
+  localStorage.getItem("theme") || "light"
+);
 
-      await updateProfile(
-        result.user,
-        {
-          displayName: form.name,
-        }
-      );
+  } catch (error) {
 
-      await saveUser(
-        result.user,
-        form.name
-      );
+    alert(
+      error.response?.data?.message ||
+      "Registration Failed"
+    );
 
-      navigate("/dashboard");
+  } finally {
 
-    } catch (error) {
+    setLoading(false);
 
-      alert(error.message);
+  }
+};
 
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
 
   /* ==================================================
                   GOOGLE REGISTER
   ================================================== */
 
+
+
   const handleGoogleSignup = async () => {
+  setGoogleLoading(true);
 
-    setGoogleLoading(true);
+  try {
+    const result = await signInWithPopup(auth, provider);
 
-    try {
+    const idToken = await result.user.getIdToken();
 
-      const result =
-        await signInWithPopup(
-          auth,
-          provider
-        );
+   const { data } = await api.post(
+  "/auth/google",
+  {
+    token: idToken,
+  }
+);
 
-      await saveUser(
-        result.user,
-        result.user.displayName
-      );
+login(data.user, data.token);
 
-      navigate("/dashboard");
 
-    } catch (error) {
+    localStorage.setItem("isLoggedIn", "true");
 
-      alert(error.message);
+    navigate("/dashboard");
 
-    } finally {
+  } catch (error) {
 
-      setGoogleLoading(false);
+    alert(
+      error.response?.data?.message ||
+      error.message
+    );
 
-    }
+  } finally {
 
-  };
+    setGoogleLoading(false);
+
+  }
+};
+
 
   /* ==================================================
                       JSX START
@@ -864,7 +873,7 @@ className="mt-8 space-y-5"
             disabled={googleLoading}
 
             onClick={handleGoogleSignup}
-
+      
             type="button"
 
             className="

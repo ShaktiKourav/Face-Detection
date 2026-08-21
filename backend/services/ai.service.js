@@ -14,18 +14,28 @@ export const detectEmotion = async (imagePath) => {
       "file",
       fs.createReadStream(imagePath)
     );
-
-    const response = await axios.post(
+    console.log("Sending File:", imagePath);
+    const { data } = await axios.post(
       "http://127.0.0.1:8000/detect",
       formData,
       {
         headers: formData.getHeaders(),
+        timeout: 30000,
       }
     );
 
-    return response.data;
+    console.log("✅ AI Response:", data);
+
+    return data;
   } catch (error) {
-    console.log(error.message);
+    console.error("❌ AI Service Error");
+
+    if (error.response) {
+      console.error("Status :", error.response.status);
+      console.error("Data   :", error.response.data);
+    } else {
+      console.error(error.message);
+    }
 
     throw new Error("Python AI Server Error");
   }

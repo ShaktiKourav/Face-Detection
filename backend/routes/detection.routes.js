@@ -10,14 +10,6 @@ import {
 } from "../controllers/detection.controller.js";
 import protect from "../middleware/auth.middleware.js";
 
-import {
-  saveDetection,
-  getDetectionHistory,
-  getDetectionById,
-  deleteDetection,
-  getDashboardStats,
-  getMoodRecommendation,
-} from "../controllers/detection.controller.js";
 
 const router = express.Router();
 

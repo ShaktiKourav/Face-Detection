@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 import {
@@ -14,114 +14,18 @@ import {
   FaMeh,
 } from "react-icons/fa";
 
-/* ==========================================================
-        SONG PLAYLIST
-   Replace src with your own mp3 files
-========================================================== */
-
-const playlists = {
-  Happy: [
-    {
-      id: 1,
-      title: "Happy Vibes",
-      artist: "AI Playlist",
-      mood: "Happy",
-      duration: "3:21",
-      image: "/images/happy.jpg",
-      src: "/songs/happy1.mp3",
-    },
-    {
-      id: 2,
-      title: "Summer Energy",
-      artist: "AI Playlist",
-      mood: "Happy",
-      duration: "2:58",
-      image: "/images/happy2.jpg",
-      src: "/songs/happy2.mp3",
-    },
-  ],
-
-  Sad: [
-    {
-      id: 3,
-      title: "Peaceful Rain",
-      artist: "AI Playlist",
-      mood: "Sad",
-      duration: "4:08",
-      image: "/images/sad.jpg",
-      src: "/songs/sad1.mp3",
-    },
-    {
-      id: 4,
-      title: "Silent Night",
-      artist: "AI Playlist",
-      mood: "Sad",
-      duration: "3:44",
-      image: "/images/sad2.jpg",
-      src: "/songs/sad2.mp3",
-    },
-  ],
-
-  Angry: [
-    {
-      id: 5,
-      title: "Calm Mind",
-      artist: "Relax Music",
-      mood: "Angry",
-      duration: "4:20",
-      image: "/images/angry.jpg",
-      src: "/songs/angry1.mp3",
-    },
-    {
-      id: 6,
-      title: "Deep Breath",
-      artist: "Relax Music",
-      mood: "Angry",
-      duration: "3:50",
-      image: "/images/angry2.jpg",
-      src: "/songs/angry2.mp3",
-    },
-  ],
-
-  Neutral: [
-    {
-      id: 7,
-      title: "Focus Beats",
-      artist: "LoFi AI",
-      mood: "Neutral",
-      duration: "3:40",
-      image: "/images/neutral.jpg",
-      src: "/songs/neutral1.mp3",
-    },
-    {
-      id: 8,
-      title: "Morning Coding",
-      artist: "LoFi AI",
-      mood: "Neutral",
-      duration: "3:16",
-      image: "/images/neutral2.jpg",
-      src: "/songs/neutral2.mp3",
-    },
-  ],
-};
+const API_URL = import.meta.env.VITE_API_URL;
 
 /* ==========================================================
         COMPONENT
 ========================================================== */
 
-const MusicPlayer = () => {
-
+const MusicPlayer = ({ song }) => {
   const audioRef = useRef(null);
 
   /* =======================
           STATES
   ======================= */
-
-  const [currentMood, setCurrentMood] = useState("Happy");
-
-  const [playlist, setPlaylist] = useState([]);
-
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -137,71 +41,44 @@ const MusicPlayer = () => {
 
   const [duration, setDuration] = useState(0);
 
-  /* =======================
-        LOAD MOOD
-  ======================= */
+  const currentMood =
+  song?.mood
+    ? song.mood.charAt(0).toUpperCase() + song.mood.slice(1)
+    : "Happy";
 
-  useEffect(() => {
-
-    const history =
-      JSON.parse(localStorage.getItem("history")) || [];
-
-    if (history.length > 0) {
-
-      const latest =
-        history[history.length - 1];
-
-      setCurrentMood(latest.mood || "Happy");
-
-    }
-
-  }, []);
-
-  /* =======================
-      UPDATE PLAYLIST
-  ======================= */
-
-  useEffect(() => {
-
-    const songs =
-      playlists[currentMood] || playlists.Happy;
-
-    setPlaylist(songs);
-
-    setCurrentIndex(0);
-
-  }, [currentMood]);
-
+ 
   /* =======================
         CURRENT SONG
   ======================= */
 
-  const currentSong = useMemo(() => {
-
-    return playlist[currentIndex];
-
-  }, [playlist, currentIndex]);
+  const currentSong = song;
 
   /* =======================
         AUTO PLAY
   ======================= */
 
-  useEffect(() => {
+useEffect(() => {
+  if (!audioRef.current || !currentSong?.audio) return;
 
-    if (!audioRef.current || !currentSong) return;
+  audioRef.current.pause();
 
-    audioRef.current.src = currentSong.src;
+ audioRef.current.src =
+  `${API_URL}${currentSong.audio}`;
 
-    audioRef.current.load();
+  audioRef.current.load();
 
-    audioRef.current.volume = volume;
+  audioRef.current.volume = volume;
 
-    audioRef.current
-      .play()
-      .then(() => setIsPlaying(true))
-      .catch(() => setIsPlaying(false));
+  audioRef.current.play()
+    .then(() => {
+      setIsPlaying(true);
+    })
+    .catch((err) => {
+      console.log("Autoplay blocked:", err);
+      setIsPlaying(false);
+    });
 
-  }, [currentSong]);
+}, [currentSong, volume]);
 
   /* =======================
         VOLUME
@@ -232,9 +109,10 @@ const MusicPlayer = () => {
 
     } else {
 
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true));
+     audioRef.current
+  .play()
+  .then(() => setIsPlaying(true))
+  .catch(console.error);
 
     }
 
@@ -244,72 +122,42 @@ const MusicPlayer = () => {
           NEXT SONG
   ========================================================== */
 
-  const nextSong = () => {
+ const nextSong = () => {
+  if (!audioRef.current) return;
 
-    if (!playlist.length) return;
+  audioRef.current.currentTime = 0;
+  audioRef.current.play();
+};
 
-    if (isShuffle) {
 
-      const random =
-        Math.floor(Math.random() * playlist.length);
-
-      setCurrentIndex(random);
-
-      return;
-
-    }
-
-    if (currentIndex === playlist.length - 1) {
-
-      setCurrentIndex(0);
-
-    } else {
-
-      setCurrentIndex(currentIndex + 1);
-
-    }
-
-  };
 
   /* ==========================================================
           PREVIOUS SONG
   ========================================================== */
 
-  const previousSong = () => {
+const previousSong = () => {
+  if (!audioRef.current) return;
 
-    if (!playlist.length) return;
+  audioRef.current.currentTime = 0;
+  audioRef.current.play();
+};
 
-    if (currentIndex === 0) {
-
-      setCurrentIndex(playlist.length - 1);
-
-    } else {
-
-      setCurrentIndex(currentIndex - 1);
-
-    }
-
-  };
-
+ 
   /* ==========================================================
           SONG ENDED
   ========================================================== */
 
-  const handleSongEnd = () => {
+ const handleSongEnd = () => {
+  if (!audioRef.current) return;
 
-    if (isRepeat) {
-
-      audioRef.current.currentTime = 0;
-
-      audioRef.current.play();
-
-      return;
-
-    }
-
-    nextSong();
-
-  };
+  if (isRepeat) {
+    audioRef.current.currentTime = 0;
+    audioRef.current.play();
+  } else {
+    setIsPlaying(false);
+    setProgress(0);
+  }
+};
 
   /* ==========================================================
           METADATA
@@ -460,16 +308,12 @@ const MusicPlayer = () => {
   const AudioPlayer = () => (
 
     <audio
-
-      ref={audioRef}
-
-      onEnded={handleSongEnd}
-
-      onLoadedMetadata={handleLoadedMetadata}
-
-      onTimeUpdate={handleTimeUpdate}
-
-    />
+  ref={audioRef}
+  preload="metadata"
+  onEnded={handleSongEnd}
+  onLoadedMetadata={handleLoadedMetadata}
+  onTimeUpdate={handleTimeUpdate}
+/>
 
   );
   /* ==========================================================
@@ -560,9 +404,12 @@ const MusicPlayer = () => {
 
           >
 
-            <img
-
-              src={currentSong.image}
+          <img
+  src={
+    currentSong.image
+      ? `${API_URL}${currentSong.image}`
+      : `${API_URL}/images/default.jpg`
+  }
 
               alt={currentSong.title}
 
@@ -786,134 +633,6 @@ const MusicPlayer = () => {
 
       )}
 
-      {/* ==========================================================
-              PLAYLIST
-      ========================================================== */}
-
-      <div className="mt-12">
-
-        <div className="mb-6 flex items-center justify-between">
-
-          <div>
-
-            <h3 className="text-xl font-bold text-[var(--text-primary)]">
-
-              Recommended Playlist
-
-            </h3>
-
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">
-
-              Songs selected according to your detected mood.
-
-            </p>
-
-          </div>
-
-          <div className="rounded-xl border border-pink-100 bg-pink-50 px-4 py-2">
-
-            <span className="font-semibold text-pink-600">
-
-              {playlist.length} Songs
-
-            </span>
-
-          </div>
-
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-
-          {playlist.map((song, index) => (
-
-            <motion.div
-
-              key={song.id}
-
-              whileHover={{
-                y: -5,
-                scale: 1.02,
-              }}
-
-              onClick={() => setCurrentIndex(index)}
-
-              className={`cursor-pointer rounded-[24px] border p-4 transition
-
-              ${
-                currentIndex === index
-                  ? "border-pink-400 bg-pink-50"
-                  : "border-white bg-white"
-              }
-
-              shadow-sm hover:shadow-xl
-
-              `}
-
-            >
-
-              <div className="flex items-center gap-5">
-
-                <img
-
-                  src={song.image}
-
-                  alt={song.title}
-
-                  className="h-16 w-16 rounded-2xl object-cover"
-
-                />
-
-                <div className="flex-1">
-
-                  <h4 className="text-base font-bold">
-
-                    {song.title}
-
-                  </h4>
-
-                  <p className="mt-1 text-xs text-gray-500">
-
-                    {song.artist}
-
-                  </p>
-
-                  <div className="mt-3 flex items-center gap-3">
-
-                    <span className="rounded-full bg-pink-100 px-2.5 py-1 text-[11px] text-xs font-semibold text-pink-600">
-
-                      {song.mood}
-
-                    </span>
-
-                    <span className="text-[11px] text-gray-400">
-
-                      {song.duration}
-
-                    </span>
-
-                  </div>
-
-                </div>
-
-                {currentIndex === index && (
-
-                  <div className="rounded-full bg-gradient-to-r from-pink-500 to-violet-600 p-3 text-white">
-
-                    <MdMusicNote size={24} />
-
-                  </div>
-
-                )}
-
-              </div>
-
-            </motion.div>
-
-          ))}
-
-        </div>
-
-      </div>
 
       {/* ==========================================================
               AI RECOMMENDATION

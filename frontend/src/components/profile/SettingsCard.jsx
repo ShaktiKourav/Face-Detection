@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { signOut } from "firebase/auth";
 import { auth } from "../../firebase";
-
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   MdDarkMode,
   MdLightMode,
@@ -16,15 +17,14 @@ import {
 } from "react-icons/md";
 
 const SettingsCard = () => {
-
+  const navigate = useNavigate();
   /* ==========================================
             SETTINGS STATES
   ========================================== */
 
   const [darkMode, setDarkMode] = useState(false);
 
-  const [notifications, setNotifications] = useState(true);
-
+  
   const [autoMusic, setAutoMusic] = useState(true);
 
   const [cameraPermission, setCameraPermission] =
@@ -47,15 +47,6 @@ const SettingsCard = () => {
 
     }
 
-    const notify =
-      localStorage.getItem("notifications");
-
-    if (notify !== null) {
-
-      setNotifications(JSON.parse(notify));
-
-    }
-
     const music =
       localStorage.getItem("autoMusic");
 
@@ -69,32 +60,65 @@ const SettingsCard = () => {
 
   }, []);
 
+
+   /* ==========================================
+            HANDLE HISTORY
+  ========================================== */
+
+const handleClearHistory = () => {
+
+  const ok = window.confirm(
+    "Are you sure you want to clear all detection history?"
+  );
+
+  if (!ok) return;
+
+  localStorage.removeItem("history");
+
+  alert("Detection history cleared successfully.");
+
+};
+
   /* ==========================================
             CAMERA PERMISSION
   ========================================== */
 
-  const checkCameraPermission = async () => {
-
-    try {
-
-      const stream =
-        await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-
-      setCameraPermission("Allowed");
-
-      stream.getTracks().forEach(track =>
-        track.stop()
-      );
-
-    } catch {
-
-      setCameraPermission("Blocked");
-
+ const checkCameraPermission = async () => {
+  try {
+    if (!navigator.permissions) {
+      setCameraPermission("Unknown");
+      return;
     }
 
-  };
+    const permission = await navigator.permissions.query({
+      name: "camera",
+    });
+
+    const updatePermission = (state) => {
+      switch (state) {
+        case "granted":
+          setCameraPermission("Allowed");
+          break;
+
+        case "denied":
+          setCameraPermission("Blocked");
+          break;
+
+        default:
+          setCameraPermission("Ask");
+      }
+    };
+
+    updatePermission(permission.state);
+
+    permission.onchange = () => {
+      updatePermission(permission.state);
+    };
+
+  } catch {
+    setCameraPermission("Unknown");
+  }
+};
 
   /* ==========================================
             THEME
@@ -119,22 +143,77 @@ const SettingsCard = () => {
 
 };
 
-  /* ==========================================
-            NOTIFICATIONS
+ /* ==========================================
+          LOGOUT
   ========================================== */
 
-  const handleNotification = () => {
 
-    const value = !notifications;
-
-    setNotifications(value);
-
-    localStorage.setItem(
-      "notifications",
-      JSON.stringify(value)
+const handleLogout = async () => {
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/auth/logout`
     );
 
-  };
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+
+    navigate("/");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+/* ==========================================
+          NOTIFICATIONS
+========================================== */
+
+const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+  const saved = localStorage.getItem("notificationsEnabled");
+
+  if (saved === null) {
+    return true;
+  }
+
+  return JSON.parse(saved);
+});
+
+/* ==========================================
+          NOTIFICATIONS ON / OFF
+========================================== */
+
+const handleNotification = async () => {
+  const newValue = !notificationsEnabled;
+
+  // UI immediately change
+  setNotificationsEnabled(newValue);
+
+  // Save locally
+  localStorage.setItem(
+    "notificationsEnabled",
+    JSON.stringify(newValue)
+  );
+
+  try {
+   await axios.put(
+  `${import.meta.env.VITE_API_URL}/api/user/settings`,
+      {
+        notifications: newValue,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+  } catch (error) {
+    console.log("Backend notification update failed:", error);
+
+    // IMPORTANT:
+    // UI ko rollback mat karo.
+    // Local toggle already working rahega.
+  }
+};
 
   /* ==========================================
             AUTO MUSIC
@@ -302,22 +381,22 @@ const SettingsCard = () => {
 
       </div>
 
-      <button
-        onClick={handleNotification}
-        className={`relative h-7 w-14 rounded-full transition-all duration-300 ${
-          notifications
-            ? "bg-gradient-to-r from-pink-500 to-violet-600"
-            : "bg-gray-300 dark:bg-gray-700"
-        }`}
-      >
-
-        <div
-          className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-300 ${
-            notifications ? "left-8" : "left-1"
-          }`}
-        />
-
-      </button>
+<button
+  onClick={handleNotification}
+  className={`relative h-7 w-14 rounded-full transition-all duration-300 ${
+    notificationsEnabled
+      ? "bg-gradient-to-r from-pink-500 to-violet-600"
+      : "bg-gray-300 dark:bg-gray-700"
+  }`}
+>
+  <div
+    className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all duration-300 ${
+      notificationsEnabled
+        ? "left-8"
+        : "left-1"
+    }`}
+  />
+</button>
 
     </div>
 
@@ -380,53 +459,61 @@ const SettingsCard = () => {
 
   <div className="mt-6 glass rounded-[24px] p-5">
 
-    <div className="flex items-center justify-between">
+  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
 
-      <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4">
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-pink-100 dark:bg-pink-500/20">
+      <div
+        className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
+          cameraPermission === "Allowed"
+            ? "bg-green-100 dark:bg-green-500/20"
+            : cameraPermission === "Blocked"
+            ? "bg-red-100 dark:bg-red-500/20"
+            : "bg-orange-100 dark:bg-orange-500/20"
+        }`}
+      >
+        <MdCameraAlt
+          size={28}
+          className={
+            cameraPermission === "Allowed"
+              ? "text-green-600 dark:text-green-400"
+              : cameraPermission === "Blocked"
+              ? "text-red-600 dark:text-red-400"
+              : "text-orange-500 dark:text-orange-400"
+          }
+        />
+      </div>
 
-          <MdCameraAlt
-            size={24}
-            className="text-pink-600 dark:text-pink-400"
-          />
+      <div>
 
-        </div>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+          Camera Permission
+        </h3>
 
-        <div>
-
-          <h3 className="text-base font-semibold text-[var(--text-primary)]">
-
-            Camera Permission
-
-          </h3>
-
-          <p className="text-[13px] text-[var(--text-secondary)]">
-
-            Required for real-time face detection.
-
-          </p>
-
-        </div>
+        <p className="mt-1 text-[13px] leading-6 text-[var(--text-secondary)]">
+          Camera access is required only when using Live Face Detection.
+          Opening the Settings page will never start the camera.
+        </p>
 
       </div>
 
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-          cameraPermission === "Allowed"
-            ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
-            : "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
-        }`}
-      >
-
-        {cameraPermission}
-
-      </span>
-
     </div>
+
+    <span
+      className={`rounded-full px-4 py-2 text-xs font-semibold ${
+        cameraPermission === "Allowed"
+          ? "bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+          : cameraPermission === "Blocked"
+          ? "bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400"
+          : "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
+      }`}
+    >
+      {cameraPermission}
+    </span>
 
   </div>
 
+</div>
   {/* ======================================
           PRIVACY & SECURITY
   ====================================== */}
@@ -605,79 +692,149 @@ const SettingsCard = () => {
     </p>
 
   </motion.div>
-    {/* ======================================
+
+  {/*======================================
           ACTION BUTTONS
   ====================================== */}
 
-  <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+
+<div className="mt-8 glass rounded-[28px] p-6">
+
+  <div className="mb-6 flex items-center justify-between">
+
+    <div>
+
+      <h3 className="text-xl font-bold text-[var(--text-primary)]">
+        Account Actions
+      </h3>
+
+      <p className="mt-1 text-sm text-[var(--text-secondary)]">
+        Manage your account and detection data securely.
+      </p>
+
+    </div>
+
+    <div className="rounded-2xl bg-pink-100 p-3 dark:bg-pink-500/20">
+      <MdSecurity
+        size={26}
+        className="text-pink-600 dark:text-pink-400"
+      />
+    </div>
+
+  </div>
+
+  <div className="grid gap-5 md:grid-cols-2">
 
     {/* Clear History */}
 
     <motion.button
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => {
-
-        const ok = window.confirm(
-          "Clear all detection history?"
-        );
-
-        if (!ok) return;
-
-        localStorage.removeItem("history");
-
-        alert("Detection history cleared.");
-
+      whileHover={{
+        y: -5,
+        scale: 1.02,
       }}
-      className="flex items-center justify-center gap-3 rounded-[22px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-600 transition-all duration-300 hover:bg-red-100 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400"
+      whileTap={{ scale: .98 }}
+      onClick={handleClearHistory}
+      className="
+      group
+      flex
+      items-center
+      justify-between
+      rounded-[24px]
+      border
+      border-red-200
+      bg-red-50
+      p-5
+      transition-all
+      duration-300
+      hover:shadow-xl
+      dark:border-red-500/20
+      dark:bg-red-500/10
+      "
     >
 
-      <MdDeleteForever size={22} />
+      <div className="flex items-center gap-4">
 
-      Clear Detection History
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-500/20">
+
+          <MdDeleteForever
+            size={26}
+            className="text-red-600 dark:text-red-400"
+          />
+
+        </div>
+
+        <div className="text-left">
+
+          <h4 className="font-semibold text-red-600 dark:text-red-400">
+            Clear History
+          </h4>
+
+          <p className="mt-1 text-xs text-[var(--text-secondary)]">
+            Remove all saved face detection records.
+          </p>
+
+        </div>
+
+      </div>
 
     </motion.button>
 
     {/* Logout */}
 
     <motion.button
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={async () => {
-
-        const ok = window.confirm(
-          "Are you sure you want to logout?"
-        );
-
-        if (!ok) return;
-
-        try {
-
-          await signOut(auth);
-
-        } catch (err) {
-
-          console.log(err);
-
-        }
-
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        localStorage.removeItem("isLoggedIn");
-
-        window.location.href = "/login";
-
+      whileHover={{
+        y: -5,
+        scale: 1.02,
       }}
-      className="flex items-center justify-center gap-3 rounded-[22px] bg-gradient-to-r from-pink-500 to-violet-600 px-5 py-4 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-2xl"
+      whileTap={{ scale: .98 }}
+      onClick={handleLogout}
+      className="
+      group
+      flex
+      items-center
+      justify-between
+      rounded-[24px]
+      bg-gradient-to-r
+      from-pink-500
+      via-fuchsia-500
+      to-violet-600
+      p-5
+      text-white
+      shadow-xl
+      transition-all
+      duration-300
+      hover:shadow-2xl
+      "
     >
 
-      <MdLogout size={22} />
+      <div className="flex items-center gap-4">
 
-      Logout
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20">
+
+          <MdLogout size={24} />
+
+        </div>
+
+        <div className="text-left">
+
+          <h4 className="font-semibold">
+            Logout
+          </h4>
+
+          <p className="mt-1 text-xs text-white/80">
+            Securely sign out from your account.
+          </p>
+
+        </div>
+
+      </div>
 
     </motion.button>
 
   </div>
+
+</div>
 
   {/* ======================================
           CURRENT SETTINGS
@@ -699,11 +856,11 @@ const SettingsCard = () => {
           value: darkMode ? "Dark" : "Light",
           color: "bg-pink-100 dark:bg-pink-500/20",
         },
-        {
-          title: "Notifications",
-          value: notifications ? "Enabled" : "Disabled",
-          color: "bg-violet-100 dark:bg-violet-500/20",
-        },
+     {
+  title: "Notifications",
+  value: notificationsEnabled ? "Enabled" : "Disabled",
+  color: "bg-violet-100 dark:bg-violet-500/20",
+},
         {
           title: "Auto Music",
           value: autoMusic ? "Enabled" : "Disabled",

@@ -12,30 +12,33 @@ import {
 
 const MoodResult = ({ result }) => {
 
-  /* ==========================================
-      DEFAULT DATA
-  ========================================== */
-
-  const moodResult = result || {
-
-    mood: "Happy 😊",
-
-    confidence: 98,
-
-    song: "Happy Vibes",
-
-    time: new Date().toLocaleTimeString(),
-
-    date: new Date().toLocaleDateString(),
-
+const moodResult = result ?? {
+    mood: "",
+    confidence: 0,
+    song: "",
+    artist: "",
+    audio: "",
+    image: "",
+    songImage: "",
+    time: "",
+    date: "",
   };
 
-  /* ==========================================
-      CONFIDENCE WIDTH
-  ========================================== */
+  const moodEmoji = {
+    happy: "😊",
+    sad: "😢",
+    angry: "😠",
+    fear: "😨",
+    disgust: "🤢",
+    surprise: "😲",
+    surprised: "😲",
+    neutral: "😐",
+  };
 
-  const progress = `${moodResult.confidence}%`;
+  const emoji =
+    moodEmoji[moodResult.mood?.toLowerCase()] || "🙂";
 
+  const progress = `${moodResult.confidence || 0}%`;
  return (
   <motion.section
     initial={{ opacity: 0, x: 20 }}
@@ -175,10 +178,8 @@ const MoodResult = ({ result }) => {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold">
-
-              {moodResult.mood}
-
-            </h2>
+  {moodResult.mood || "Detect your Mood"} 
+</h2>
 
             <p className="mt-2 text-xs text-white/90">
 
@@ -208,7 +209,7 @@ const MoodResult = ({ result }) => {
             backdrop-blur-xl
             "
           >
-            😊
+            {emoji}
           </motion.div>
 
         </div>
@@ -224,21 +225,21 @@ const MoodResult = ({ result }) => {
               Confidence Score
 
             </span>
-
+                    
             <span className="text-sm font-bold">
-
-              {moodResult.confidence}%
-
+            {Number(moodResult.confidence).toFixed(1)}%
             </span>
+
 
           </div>
 
           <div className="h-2 overflow-hidden rounded-full bg-white/20">
-
             <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: progress }}
-              transition={{ duration: 1 }}
+             initial={{ width: 0 }}
+              animate={{
+  width: `${Number(moodResult.confidence) || 0}%`,
+}}
+transition={{ duration: 0.8 }}
               className="
               h-full
               rounded-full
@@ -256,9 +257,7 @@ const MoodResult = ({ result }) => {
       {/* =======================================================
                           DETAILS
       ======================================================= */}
-            {/* =======================================================
-                          DETAILS
-      ======================================================= */}
+         
 
       <div
         className="
@@ -328,7 +327,9 @@ const MoodResult = ({ result }) => {
               >
                 {moodResult.song}
               </h3>
-
+              <p className="text-xs text-gray-500 mt-1">
+    {moodResult.artist}
+</p>
             </div>
 
           </div>
@@ -655,7 +656,7 @@ const MoodResult = ({ result }) => {
 
             <h4 className="mt-2 text-lg font-bold text-[var(--text-primary)]">
 
-              {moodResult.confidence}%
+              {Number(moodResult.confidence).toFixed(1)}%
 
             </h4>
 
@@ -680,7 +681,7 @@ const MoodResult = ({ result }) => {
 
             <h4 className="mt-2 text-lg font-bold text-[var(--text-primary)]">
 
-              {moodResult.mood}
+             {moodResult.mood || "Detect your Mood"} {emoji}
 
             </h4>
 
@@ -803,7 +804,7 @@ const MoodResult = ({ result }) => {
         </div>
 
       </motion.div>
-            {/* =======================================================
+   {/* =======================================================
                       ACTION BUTTONS
       ======================================================= */}
 
@@ -844,6 +845,20 @@ const MoodResult = ({ result }) => {
           Play Music
 
         </Link>
+          
+          {moodResult.audio ? (
+  <audio
+    key={moodResult.audio}
+    controls
+    autoPlay
+    className="mt-5 w-full"
+  >
+   <source
+    src={`${import.meta.env.VITE_API_URL}${moodResult.audio}`}
+    type="audio/mpeg"
+  />
+  </audio>
+) : null}
 
         <Link
           to="/history"

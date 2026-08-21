@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-
+import api from "../../services/api";
 import {
   MdHistory,
   MdSearch,
@@ -32,45 +32,80 @@ const HistoryTable = () => {
           LOAD HISTORY
   ========================================== */
 
-  useEffect(() => {
+useEffect(() => {
+  const loadHistory = async () => {
+    try {
+      const response = await api.get("/history");
 
-    const data =
-      JSON.parse(localStorage.getItem("history")) || [];
+      console.log("📚 History Response:", response.data);
 
-    setHistory(data);
+      setHistory(response.data.data || []);
 
-  }, []);
+    } catch (error) {
+      console.error("❌ Failed to load history:", error);
+
+      setHistory([]);
+    }
+  };
+
+  loadHistory();
+}, []);
 
   /* ==========================================
           DELETE RECORD
   ========================================== */
 
-  const deleteRecord = (index) => {
+ const deleteRecord = async (id) => {
 
-    const updated =
-      history.filter((_, i) => i !== index);
+    try {
 
-    setHistory(updated);
+      await api.delete(
+        `/history/${id}`
+      );
 
-    localStorage.setItem(
-      "history",
-      JSON.stringify(updated)
-    );
+      setHistory((prev) =>
+        prev.filter(
+          (item) => item._id !== id
+        )
+      );
+
+      console.log(
+        "🗑️ Record deleted:",
+        id
+      );
+
+    } catch (error) {
+
+      console.error(
+        "❌ Failed to delete history:",
+        error
+      );
+
+    }
 
   };
 
   /* ==========================================
           CLEAR HISTORY
   ========================================== */
+const clearHistory = async () => {
+  try {
 
-  const clearHistory = () => {
+    await api.delete("/history/clear/all");
 
     setHistory([]);
 
-    localStorage.removeItem("history");
+    console.log("🗑️ History cleared successfully");
 
-  };
+  } catch (error) {
 
+    console.error(
+      "❌ Clear history failed:",
+      error
+    );
+
+  }
+};
   /* ==========================================
           FILTERED DATA
   ========================================== */
@@ -102,15 +137,20 @@ const HistoryTable = () => {
 
   const totalRecords = history.length;
 
-  const todayRecords = history.filter((item) => {
+ const todayRecords = history.filter((item) => {
 
-    return (
-      item.date ===
-      new Date().toLocaleDateString()
-    );
+  if (!item.createdAt) return false;
 
-  }).length;
+  const recordDate = new Date(item.createdAt);
 
+  const today = new Date();
+
+  return (
+    recordDate.toDateString() ===
+    today.toDateString()
+  );
+
+}).length;
   /* ==========================================
           UI
   ========================================== */
@@ -892,7 +932,7 @@ const HistoryTable = () => {
             scale: .94,
           }}
 
-          onClick={() => deleteRecord(index)}
+        onClick={() => deleteRecord(item._id)}
 
           className="
           mx-auto
@@ -962,7 +1002,7 @@ const HistoryTable = () => {
         </div>
 
         <button
-          onClick={() => deleteRecord(index)}
+          onClick={() => deleteRecord(item._id)}
           className="
           flex
           h-10

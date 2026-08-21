@@ -1,16 +1,43 @@
+
+
+// const ProtectedRoute = ({ children }) => {
+//   const location = useLocation();
+
+//   // JWT Token
+//   const token = localStorage.getItem("token");
+
+//   // User Data (Optional)
+//   const user = localStorage.getItem("user");
+
+//   // Not Logged In
+//   if (!token || !user) {
+//     return (
+//       <Navigate
+//         to="/"
+//         replace
+//         state={{ from: location }}
+//       />
+//     );
+//   }
+
+//   // Logged In
+//   return children;
+// };
+
+
 import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
+
+  const { isLoggedIn, loading } = useAuth();
+
   const location = useLocation();
 
-  // JWT Token
-  const token = localStorage.getItem("token");
+  if (loading) return null;
 
-  // User Data (Optional)
-  const user = localStorage.getItem("user");
+  if (!isLoggedIn) {
 
-  // Not Logged In
-  if (!token || !user) {
     return (
       <Navigate
         to="/"
@@ -18,10 +45,12 @@ const ProtectedRoute = ({ children }) => {
         state={{ from: location }}
       />
     );
+
   }
 
-  // Logged In
   return children;
 };
+
+
 
 export default ProtectedRoute;

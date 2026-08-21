@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import MusicPlayer from "../components/music/MusicPlayer";
-
+import { useEffect, useState } from "react";
+import { getRecommendation } from "../services/music.service";
 import {
   MdMusicNote,
   MdPsychology,
@@ -12,6 +13,31 @@ import {
 } from "react-icons/fa";
 
 const Music = () => {
+
+const [song, setSong] = useState(null); 
+ useEffect(() => {
+  const loadSong = async () => {
+    try {
+      const res = await getRecommendation();
+
+      if (res.success) {
+   setSong({
+  mood: res.mood,
+  title: res.song.title,
+  artist: res.song.artist,
+  audio: res.song.audio,
+  image: res.song.image,
+});
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  loadSong();
+}, []);
+
+
   return (
 <div className="space-y-6">
 
@@ -40,7 +66,7 @@ const Music = () => {
 
         <h1 className="mt-3 text-3xl font-bold text-[var(--text-primary)] lg:text-4xl">
 
-          Smart
+            AI Mood Based Music
 
         </h1>
 
@@ -51,6 +77,17 @@ const Music = () => {
           stay motivated and enjoy a better listening experience.
 
         </p>
+        {song && (
+  <div className="mt-4 flex flex-wrap gap-3">
+    <span className="rounded-full bg-pink-100 px-4 py-2 text-sm font-semibold text-pink-600">
+      Mood : {song.mood}
+    </span>
+
+    <span className="rounded-full bg-violet-100 px-4 py-2 text-sm font-semibold text-violet-600">
+      {song.title} • {song.artist}
+    </span>
+  </div>
+)}
 
       </div>
 
@@ -65,6 +102,17 @@ const Music = () => {
     </div>
 
   </motion.section>
+
+  {/* ==========================================
+        MUSIC PLAYER
+========================================== */}
+{song ? (
+  <MusicPlayer song={song} />
+) : (
+  <div className="glass rounded-3xl p-8 text-center">
+    Loading Recommendation...
+  </div>
+)}
 
   {/* ==========================================
                 FEATURE CARDS

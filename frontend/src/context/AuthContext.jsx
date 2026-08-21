@@ -1,69 +1,134 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  createContext,
+  useContext,
+  useState,
+} from "react";
+import { signOut } from "firebase/auth";
+
 import { auth } from "../firebase";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
+  const [user, setUser] = useState(() => {
 
-        localStorage.setItem("isLoggedIn", "true");
+    const savedUser = localStorage.getItem("user");
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            uid: currentUser.uid,
-            name: currentUser.displayName,
-            email: currentUser.email,
-            photo: currentUser.photoURL,
-            phone: currentUser.phoneNumber || "",
-          })
-        );
-      } else {
-        setUser(null);
+    return savedUser
+      ? JSON.parse(savedUser)
+      : null;
 
-        localStorage.removeItem("isLoggedIn");
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-      }
+  });
 
-      setLoading(false);
-    });
+  const [loading, setLoading] = useState(false);
 
-    return () => unsubscribe();
-  }, []);
+  /* ==========================================
+              Firebase Auth Listener
+  ========================================== */
+
+  // useEffect(() => {
+
+  //   const unsubscribe = onAuthStateChanged(
+  //     auth,
+  //     (firebaseUser) => {
+
+  //       if (firebaseUser) {
+
+  //         localStorage.setItem(
+  //           "isLoggedIn",
+  //           "true"
+  //         );
+
+  //       }
+
+  //       setLoading(false);
+
+  //     }
+  //   );
+
+  //   return unsubscribe;
+
+  // }, []);
+
+
+
+  /* ==========================================
+                  LOGIN
+  ========================================== */
+
+  const login = (userData, token) => {
+
+    localStorage.setItem(
+      "token",
+      token
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(userData)
+    );
+
+    localStorage.setItem(
+      "isLoggedIn",
+      "true"
+    );
+
+    setUser(userData);
+
+  };
+
+  /* ==========================================
+                  LOGOUT
+  ========================================== */
 
   const logout = async () => {
-    await signOut(auth);
 
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
+    try {
+
+      await signOut(auth);
+
+    } catch (err) {
+
+      console.log(err);
+
+    }
+
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
 
     setUser(null);
+
   };
 
   return (
+
     <AuthContext.Provider
       value={{
+
         user,
-        setUser,
+
         loading,
+
+        login,
+
         logout,
+
         isLoggedIn: !!user,
+
       }}
     >
+
       {!loading && children}
+
     </AuthContext.Provider>
+
   );
+
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () =>
+  useContext(AuthContext);
 
 export default AuthContext;

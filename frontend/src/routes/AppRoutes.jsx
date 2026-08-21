@@ -26,6 +26,9 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
+
+
+        
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/detection" element={<Detection />} />
         <Route path="/music" element={<Music />} />

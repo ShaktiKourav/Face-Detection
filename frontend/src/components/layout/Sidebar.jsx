@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-
+import axios from "axios";
 import {
   FiHome,
   FiCamera,
@@ -14,7 +14,7 @@ import {
 
 const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
-  const navigate = useNavigate();
+ const navigate = useNavigate();
 
   const [collapsed, setCollapsed] = useState(false);
 
@@ -46,10 +46,21 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     },
   ];
 
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
+const handleLogout = async () => {
+  try {
+    await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/auth/logout`
+    );
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+
+    navigate("/");
+  } catch (error) {
+    console.log(error);
+  }
+};
 return (
 
   <aside

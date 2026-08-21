@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-} from "firebase/auth";
-
+import api from "../services/api";
+import { signInWithPopup } from "firebase/auth"
 import { auth, provider } from "../firebase";
-
+import { useAuth } from "../context/AuthContext";
 import {
   MdFaceRetouchingNatural,
   MdEmail,
@@ -17,18 +13,16 @@ import {
   MdVisibilityOff,
   MdOutlineArrowForward,
 } from "react-icons/md";
-
 import { FcGoogle } from "react-icons/fc";
-
 import {
   FiShield,
   FiCheckCircle,
 } from "react-icons/fi";
-
 const Login = () => {
 
   const navigate = useNavigate();
-
+  const { login } = useAuth();
+  
   /* =====================================================
                       STATES
   ===================================================== */
@@ -107,124 +101,173 @@ const Login = () => {
 
   };
 
-  /* =====================================================
-                    SAVE USER
-  ===================================================== */
 
-  const saveUser = async (user) => {
 
-    const token = await user.getIdToken();
+//   const saveUser = (data) => {
 
-    localStorage.setItem("token", token);
+//   localStorage.setItem("token", data.token);
 
-    localStorage.setItem(
-      "isLoggedIn",
-      "true"
-    );
+//   localStorage.setItem("isLoggedIn", "true");
 
-    localStorage.setItem(
-      "theme",
-      localStorage.getItem("theme") || "light"
-    );
+//   localStorage.setItem(
+//     "theme",
+//     localStorage.getItem("theme") || "light"
+//   );
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
+//   localStorage.setItem(
+//     "user",
+//     JSON.stringify(data.user)
+//   );
+// };
 
-        uid: user.uid,
-
-        name:
-          user.displayName ||
-          "AI User",
-
-        email: user.email,
-
-        photo:
-          user.photoURL ||
-
-          `https://ui-avatars.com/api/?background=a855f7&color=ffffff&name=${encodeURIComponent(
-            user.displayName || "User"
-          )}`,
-
-      })
-    );
-
-  };
 
   /* =====================================================
                     EMAIL LOGIN
   ===================================================== */
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    e.preventDefault();
+  if (!validate()) return;
 
-    if (!validate()) return;
+  setLoading(true);
 
-    setLoading(true);
+  try {
+const { data } = await api.post(
+  "/auth/login",
+  {
+    email: form.email,
+    password: form.password,
+  }
+);
 
-    try {
+// Save user & JWT using AuthContext
+login(data.user, data.token);
 
-      const result =
-        await signInWithEmailAndPassword(
+// Add login notification
+addLoginNotification();
 
-          auth,
+// Redirect
+navigate("/dashboard");
 
-          form.email,
+  } catch (error) {
 
-          form.password
+    alert(
+      error.response?.data?.message ||
+      "Login Failed"
+    );
 
-        );
+  } finally {
 
-      await saveUser(result.user);
+    setLoading(false);
 
-      navigate("/dashboard");
-
-    } catch (error) {
-
-      alert(error.message);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
-  };
+  }
+};
 
   /* =====================================================
                     GOOGLE LOGIN
   ===================================================== */
 
-  const handleGoogleLogin = async () => {
+ const handleGoogleLogin = async () => {
 
-    setGoogleLoading(true);
+  setGoogleLoading(true);
+
+  try {
+
+    // Firebase Google Sign In
+    const result = await signInWithPopup(
+      auth,
+      provider
+    );
+
+    // Firebase ID Token
+    const firebaseToken = await result.user.getIdToken();
+
+    // Backend Google Login
+const { data } = await api.post(
+  "/auth/google",
+  {
+    token: firebaseToken,
+  }
+);
+// Save JWT + User using AuthContext
+login(data.user, data.token);
+
+// Add login notification
+addLoginNotification();
+
+// Redirect
+navigate("/dashboard");
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.message ||
+      error.message ||
+      "Google Login Failed"
+    );
+
+  } finally {
+
+    setGoogleLoading(false);
+
+  }
+
+};
+
+/* =====================================================
+                   notification
+  ===================================================== */
+
+
+const addLoginNotification = () => {
+  try {
+
+    const saved = localStorage.getItem("notifications");
+
+    let existing = [];
 
     try {
-
-      const result =
-        await signInWithPopup(
-          auth,
-          provider
-        );
-
-      await saveUser(result.user);
-
-      navigate("/dashboard");
-
-    } catch (error) {
-
-      alert(error.message);
-
-    } finally {
-
-      setGoogleLoading(false);
-
+      existing = saved ? JSON.parse(saved) : [];
+    } catch {
+      existing = [];
     }
 
-  };
+    if (!Array.isArray(existing)) {
+      existing = [];
+    }
 
-  /* =====================================================
+    const newNotification = {
+      id: Date.now(),
+      message: "You have successfully logged in.",
+      type: "login",
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [
+      newNotification,
+      ...existing,
+    ];
+
+    localStorage.setItem(
+      "notifications",
+      JSON.stringify(updated)
+    );
+
+    window.dispatchEvent(
+      new Event("notificationUpdated")
+    );
+
+  } catch (error) {
+    console.error(
+      "Login notification error:",
+      error
+    );
+  }
+};
+
+/* =====================================================
                     JSX
   ===================================================== */
 
@@ -860,3 +903,8 @@ className="mt-8 space-y-5"
 };
 
 export default Login;
+
+
+
+
+

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
+import uvicorn
 import shutil
 import os
 import traceback
@@ -55,6 +55,9 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 async def detect(file: UploadFile = File(...)):
     try:
         file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+        print("Received File:", file.filename)
+        print("Saving To:", file_path)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)

@@ -219,8 +219,9 @@ const History = () => {
 
           <p className="mt-2 text-sm leading-6 text-gray-500">
 
-            History is securely stored and ready for
-            MongoDB or Firebase synchronization.
+           History is securely stored in MongoDB and linked
+           to your account, so your records remain available
+           whenever you log in.
 
           </p>
 

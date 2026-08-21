@@ -1,67 +1,407 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-
+import { useState, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import api from "../services/api"; 
 import Camera from "../components/detection/Camera";
 import MoodResult from "../components/detection/MoodResult";
-
+import { useEffect } from "react";
+import { loadFaceModels } from "../utils/loadFaceModels";
+import { detectEmotion } from "../utils/detectEmotion";
 import {
   MdFaceRetouchingNatural,
   MdOutlineCameraAlt,
   MdVerified,
 } from "react-icons/md";
 
+const API_URL = import.meta.env.VITE_API_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const Detection = () => {
 
-  const [result, setResult] = useState(null);
+  useEffect(() => {
+  loadFaceModels();
+}, []);
 
+  const [result, setResult] = useState(null);
+  const [currentMood, setCurrentMood] = useState("Waiting...");
+  const [confidence, setConfidence] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const audioRef = useRef(null);
   /* ==========================================
         CAPTURE IMAGE
   ========================================== */
 
-  const handleCapture = async (image) => {
+const handleCapture = async (image) => {
+  try {
+    console.log("=================================");
+    console.log("📸 CAPTURE STARTED");
+    console.log("Image received:", !!image);
+    console.log("=================================");
+
+   if (!image) {
+  console.log("🔄 Capture reset");
+
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    audioRef.current.removeAttribute("src");
+    audioRef.current.load();
+  }
+
+  setCurrentMood("");
+  setConfidence(0);
+
+  setResult({
+    mood: "",
+    confidence: 0,
+    song: "",
+    artist: "",
+    audio: "",
+    image: "",
+    songImage: "",
+    time: "",
+    date: "",
+  });
+
+  setLoading(false);
+
+  return;
+}
+
+    setLoading(true);
+
+    // ==========================================
+    // STOP PREVIOUS SONG
+    // ==========================================
+
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.removeAttribute("src");
+        audioRef.current.load();
+      } catch (audioError) {
+        console.log("Audio reset error:", audioError);
+      }
+    }
+
+    // ==========================================
+    // FRONTEND AI DETECTION
+    // ==========================================
+
+    console.log("🤖 Running frontend emotion detection...");
+
+    let ai;
 
     try {
+      ai = await detectEmotion(image);
+    } catch (aiError) {
+      console.error("❌ Frontend AI error:", aiError);
 
-      /*
-      Backend Ready
-
-      const response = await api.post("/detect",{
-          image
+      setResult({
+        mood: "Detection Failed",
+        confidence: 0,
+        song: "",
+        artist: "",
+        audio: "",
+        image: "",
+        songImage: "",
+        time: new Date().toLocaleTimeString(),
+        date: new Date().toLocaleDateString(),
       });
 
-      setResult(response.data);
-      */
-
-      // Demo Data
-
-      setTimeout(() => {
-
-        setResult({
-
-          mood: "Happy 😊",
-
-          confidence: 98,
-
-          song: "Happy Vibes",
-
-          time: new Date().toLocaleTimeString(),
-
-          date: new Date().toLocaleDateString(),
-
-        });
-
-      },1000);
-
+      return;
     }
 
-    catch(error){
+    console.log("🤖 Frontend AI Result:", ai);
 
-      console.log(error);
+    // ==========================================
+    // FACE NOT FOUND
+    // ==========================================
 
+    if (!ai?.success) {
+      console.log("❌ Face not detected");
+
+      setCurrentMood("Face Not Found");
+      setConfidence(0);
+
+      setResult({
+        mood: "Face Not Found",
+        confidence: 0,
+        song: "",
+        artist: "",
+        audio: "",
+        image: "",
+        songImage: "",
+        time: new Date().toLocaleTimeString(),
+        date: new Date().toLocaleDateString(),
+      });
+
+      return;
     }
 
-  };
+    console.log("✅ Frontend AI detected:", ai.emotion);
+    console.log("📊 Frontend confidence:", ai.confidence);
 
+    // ==========================================
+    // SEND IMAGE + AI DATA TO BACKEND
+    // ==========================================
+
+    console.log("🚀 Sending data to backend...");
+
+    const response = await api.post(
+      "/detection/capture",
+      {
+        image: image,
+        personName: "Unknown",
+
+        emotion: ai.emotion,
+        confidence: ai.confidence,
+        age: ai.age,
+        gender: ai.gender,
+        allEmotions: ai.all_emotions,
+      }
+    );
+
+    console.log("✅ Backend response received:");
+    console.log(response.data);
+
+    const data = response.data;
+
+    // ==========================================
+    // CHECK BACKEND RESPONSE
+    // ==========================================
+
+    if (!data) {
+      throw new Error("Backend returned empty response");
+    }
+
+    // Backend AI failure
+    if (data.aiResult && data.aiResult.success === false) {
+      console.error(
+        "❌ Backend AI failed:",
+        data.aiResult.message
+      );
+
+      setResult({
+        mood: "Detection Failed",
+        confidence: 0,
+        song: "",
+        artist: "",
+        audio: "",
+        image: "",
+        songImage: "",
+        time: new Date().toLocaleTimeString(),
+        date: new Date().toLocaleDateString(),
+      });
+
+      return;
+    }
+
+    // ==========================================
+    // GET MOOD
+    // ==========================================
+
+    const mood =
+      data?.mood ||
+      data?.emotion ||
+      ai?.emotion ||
+      "Unknown";
+
+    const confidence = Number(
+      data?.confidence ??
+      ai?.confidence ??
+      0
+    );
+
+    console.log("=================================");
+    console.log("🎭 MOOD:", mood);
+    console.log("📊 CONFIDENCE:", confidence);
+    console.log("=================================");
+
+    setCurrentMood(mood);
+    setConfidence(confidence);
+
+    // ==========================================
+    // GET SONG DATA SAFELY
+    // ==========================================
+
+    const songTitle =
+      data?.song?.title || "";
+
+    const songArtist =
+      data?.song?.artist || "";
+
+    const songAudio =
+      data?.song?.audio || "";
+
+    const songImage =
+      data?.song?.image || "";
+
+    // ==========================================
+    // GET DETECTION IMAGE
+    // ==========================================
+
+    const detectionImage =
+      data?.detection?.image || "";
+
+    // ==========================================
+    // UPDATE RESULT
+    // ==========================================
+
+    const finalResult = {
+      mood: mood,
+      confidence: confidence,
+
+      song: songTitle,
+      artist: songArtist,
+      audio: songAudio,
+
+      image: detectionImage,
+      songImage: songImage,
+
+      time: new Date().toLocaleTimeString(),
+      date: new Date().toLocaleDateString(),
+    };
+
+    console.log("🎉 FINAL RESULT:");
+    console.log(finalResult);
+
+    setResult(finalResult);
+
+    // ==========================================
+    // PLAY RECOMMENDED SONG
+    // ==========================================
+
+    if (
+      audioRef.current &&
+      songAudio
+    ) {
+     const audioUrl =
+  songAudio.startsWith("http")
+    ? songAudio
+    : `${BACKEND_URL}${songAudio}`;
+
+      console.log("🎵 Audio URL:", audioUrl);
+
+      try {
+        audioRef.current.pause();
+
+        audioRef.current.currentTime = 0;
+
+        audioRef.current.src = audioUrl;
+
+        audioRef.current.load();
+
+        await audioRef.current.play();
+
+        console.log("🎵 Song playing successfully");
+
+      } catch (audioError) {
+        console.log(
+          "⚠️ Autoplay blocked:",
+          audioError
+        );
+      }
+    } else {
+      console.log("ℹ️ No song audio returned by backend");
+    }
+
+  } catch (err) {
+
+    // ==========================================
+    // ERROR HANDLING
+    // ==========================================
+
+    console.error("=================================");
+    console.error("❌ DETECTION ERROR");
+    console.error("=================================");
+
+    console.error(
+      "Message:",
+      err?.message
+    );
+
+    console.error(
+      "Response:",
+      err?.response?.data
+    );
+
+    console.error(
+      "Status:",
+      err?.response?.status
+    );
+
+    console.error(
+      "Full Error:",
+      err
+    );
+
+    // Reset audio
+
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.removeAttribute("src");
+        audioRef.current.load();
+      } catch (audioError) {
+        console.log("Audio cleanup error:", audioError);
+      }
+    }
+
+    setCurrentMood("Detection Failed");
+    setConfidence(0);
+
+    setResult({
+      mood: "Detection Failed",
+      confidence: 0,
+      song: "",
+      artist: "",
+      audio: "",
+      image: "",
+      songImage: "",
+      time: new Date().toLocaleTimeString(),
+      date: new Date().toLocaleDateString(),
+    });
+
+  } finally {
+
+    console.log("🏁 Detection finished");
+
+    setLoading(false);
+  }
+};
+
+const stopDetection = () => {
+  console.log("🛑 Detection stopped");
+
+  // Stop song
+  if (audioRef.current) {
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+    audioRef.current.removeAttribute("src");
+    audioRef.current.load();
+  }
+
+  // Reset detection result
+  setCurrentMood("");
+  setConfidence(0);
+
+  setResult({
+    mood: "",
+    confidence: 0,
+    song: "",
+    artist: "",
+    audio: "",
+    image: "",
+    songImage: "",
+    time: "",
+    date: "",
+  });
+
+  setLoading(false);
+
+  console.log("🎵 Song stopped");
+};
   return (
 
 <div className="space-y-8">
@@ -393,6 +733,21 @@ const Detection = () => {
         </p>
 
       </motion.div>
+    {
+  result?.image && (
+   <img
+  src={`${BACKEND_URL}${result.image}`}
+  alt="Detected"
+  className="
+    mt-5
+    rounded-2xl
+    w-full
+    border
+    border-[var(--border-color)]
+  "
+/>
+  )
+}
 
       {/* Mood Analysis */}
 
@@ -479,9 +834,8 @@ const Detection = () => {
 <div className="grid gap-8 xl:grid-cols-[1.25fr_.75fr]">
 
 <Camera
-
-onCapture={handleCapture}
-
+  onCapture={handleCapture}
+  onStop={stopDetection}
 />
 
 <MoodResult
@@ -491,6 +845,7 @@ result={result}
 />
 
 </div>
+
 
 {/* =====================================================
             HOW AI DETECTION WORKS
@@ -830,9 +1185,21 @@ result={result}
 
 </motion.section>
 
+
+
+  <audio
+  ref={audioRef}
+  hidden
+/>
+
+
 </div> 
 
-  )
+
+  
+
+
+)
 
 
 };

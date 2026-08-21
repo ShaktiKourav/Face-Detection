@@ -28,10 +28,6 @@ const detectionSchema = new mongoose.Schema(
 },
 
 
-currentMood: {
-    type: String,
-    default: "neutral"
-},
 
     mood: {
       type: String,
@@ -41,7 +37,7 @@ currentMood: {
         "Sad",
         "Angry",
         "Neutral",
-        "Surprised",
+        "Surprise",
         "Fear",
         "Disgust",
       ],
@@ -75,12 +71,18 @@ currentMood: {
 
     /* ===========================================
        Captured Image
-    =========================================== */
+       =========================================== */
+  
+image: {
+  type: String,
+  default: "",
+},
 
-    image: {
-      type: String,
-      default: "",
-    },
+songImage: {
+  type: String,
+  default: "",
+},
+
 
     /* ===========================================
        Camera Information
