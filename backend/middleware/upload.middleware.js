@@ -1,19 +1,27 @@
+
+
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 
 /* ==========================================================
-   Create Upload Folder Automatically
+   UPLOAD DIRECTORY
 ========================================================== */
 
-const uploadPath = "uploads/profiles";
+const uploadPath = path.join(
+  process.cwd(),
+  "uploads",
+  "profiles"
+);
 
 if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
+  fs.mkdirSync(uploadPath, {
+    recursive: true,
+  });
 }
 
 /* ==========================================================
-   Storage Configuration
+   STORAGE
 ========================================================== */
 
 const storage = multer.diskStorage({
@@ -23,35 +31,34 @@ const storage = multer.diskStorage({
 
   filename(req, file, cb) {
     const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9);
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
 
     cb(
       null,
-      uniqueName + path.extname(file.originalname)
+      uniqueName +
+        path.extname(file.originalname).toLowerCase()
     );
   },
 });
 
 /* ==========================================================
-   File Filter
+   FILE FILTER
 ========================================================== */
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpg|jpeg|png|webp/;
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
 
-  const extName = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
-
-  const mimeType = allowedTypes.test(file.mimetype);
-
-  if (extName && mimeType) {
+  if (
+    allowedMimeTypes.includes(file.mimetype)
+  ) {
     return cb(null, true);
   }
 
-  cb(
+  return cb(
     new Error(
       "Only JPG, JPEG, PNG and WEBP files are allowed."
     )
@@ -59,7 +66,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 /* ==========================================================
-   Upload Middleware
+   MULTER
 ========================================================== */
 
 const upload = multer({

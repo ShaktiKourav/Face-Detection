@@ -133,87 +133,146 @@ const handleSubmit = async (e) => {
   setLoading(true);
 
   try {
-const { data } = await api.post(
-  "/auth/login",
-  {
-    email: form.email,
-    password: form.password,
-  }
-);
+    const { data } = await api.post("/auth/login", {
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+    });
 
-// Save user & JWT using AuthContext
-login(data.user, data.token);
+    if (!data.success || !data.token || !data.user) {
+      throw new Error(data.message || "Login Failed");
+    }
 
-// Add login notification
-addLoginNotification();
+    // AuthContext handles:
+    // token + user + isLoggedIn + React state
+    login(data.user, data.token);
 
-// Redirect
-navigate("/dashboard");
+    // Login notification
+    addLoginNotification();
 
+    navigate("/dashboard");
   } catch (error) {
-
     alert(
       error.response?.data?.message ||
+      error.message ||
       "Login Failed"
     );
-
   } finally {
-
     setLoading(false);
-
   }
 };
-
   /* =====================================================
                     GOOGLE LOGIN
   ===================================================== */
 
- const handleGoogleLogin = async () => {
+//   const handleGoogleLogin = async () => {
+//   setGoogleLoading(true);
+
+//   try {
+//     // Firebase Google authentication
+//     const result = await signInWithPopup(auth, provider);
+
+//     // Firebase ID token
+//     const firebaseToken = await result.user.getIdToken();
+
+//     // Send Firebase token to our backend
+//     const { data } = await api.post("/auth/google", {
+//       token: firebaseToken,
+//     });
+
+//     if (!data.success || !data.token || !data.user) {
+//       throw new Error(
+//         data.message || "Google Login Failed"
+//       );
+//     }
+
+//     // Store backend JWT + user
+//     login(data.user, data.token);
+
+//     // Login notification
+//     addLoginNotification();
+
+//     navigate("/dashboard");
+//   } catch (error) {
+//     alert(
+//       error.response?.data?.message ||
+//       error.message ||
+//       "Google Login Failed"
+//     );
+//   } finally {
+//     setGoogleLoading(false);
+//   }
+// };
+const handleGoogleLogin = async () => {
+  if (googleLoading) return;
 
   setGoogleLoading(true);
 
   try {
+    console.log("STEP 1: Opening Google popup...");
 
-    // Firebase Google Sign In
-    const result = await signInWithPopup(
-      auth,
-      provider
-    );
+    const result = await signInWithPopup(auth, provider);
 
-    // Firebase ID Token
+    console.log("STEP 2: Firebase Google login successful");
+    console.log("Firebase user:", result.user);
+
     const firebaseToken = await result.user.getIdToken();
 
-    // Backend Google Login
-const { data } = await api.post(
-  "/auth/google",
-  {
-    token: firebaseToken,
-  }
-);
-// Save JWT + User using AuthContext
-login(data.user, data.token);
+    console.log("STEP 3: Firebase token received");
 
-// Add login notification
-addLoginNotification();
+    const { data } = await api.post("/auth/google", {
+      token: firebaseToken,
+    });
 
-// Redirect
-navigate("/dashboard");
+    console.log("STEP 4: Backend response:", data);
+
+    if (!data.success || !data.token || !data.user) {
+      throw new Error(
+        data.message || "Backend Google authentication failed"
+      );
+    }
+
+    login(data.user, data.token);
+
+    addLoginNotification();
+
+    navigate("/dashboard", {
+      replace: true,
+    });
 
   } catch (error) {
 
-    alert(
-      error.response?.data?.message ||
-      error.message ||
-      "Google Login Failed"
-    );
+    console.error("========== GOOGLE LOGIN ERROR ==========");
+    console.error("Error:", error);
+    console.error("Error code:", error.code);
+    console.error("Error message:", error.message);
+    console.error("Response:", error.response?.data);
+    console.error("========================================");
+
+    if (error.code === "auth/popup-closed-by-user") {
+      alert("Google popup was closed before login completed.");
+    } 
+    else if (error.code === "auth/popup-blocked") {
+      alert("Google popup was blocked. Please allow popups for localhost.");
+    } 
+    else if (error.code === "auth/unauthorized-domain") {
+      alert("localhost is not authorized in Firebase.");
+    } 
+    else if (error.code === "auth/operation-not-allowed") {
+      alert("Google Sign-In is not enabled in Firebase.");
+    } 
+    else {
+      alert(
+        error.response?.data?.message ||
+        error.message ||
+        "Google Authentication Failed"
+      );
+    }
 
   } finally {
-
     setGoogleLoading(false);
-
   }
-
 };
+
 
 /* =====================================================
                    notification

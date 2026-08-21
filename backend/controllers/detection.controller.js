@@ -4,7 +4,7 @@ import path from "path";
 import { v4 as uuid } from "uuid";
 import { detectEmotion } from "../services/ai.service.js";
 import { musicLibrary } from "../data/musicLibrary.js";
-
+import User from "../models/User.model.js";
 /* ==========================================================
    Save Face Detection
 ========================================================== */
@@ -225,7 +225,7 @@ export const getMoodRecommendation = async (req, res) => {
 
 export const captureDetection = async (req, res) => {
   try {
-    const { image, personName = "Unknown" } = req.body;
+    const { image } = req.body;
     
     if (!image) {
   return res.status(400).json({
@@ -233,7 +233,18 @@ export const captureDetection = async (req, res) => {
     message: "Image is required",
   });
 }
+const user = await User.findById(req.user._id).select(
+  "name currentMood"
+);
 
+if (!user) {
+  return res.status(404).json({
+    success: false,
+    message: "User not found",
+  });
+}
+
+const personName = user.name;
     /* ===========================================
        Convert Base64 Image
     =========================================== */
@@ -372,8 +383,6 @@ const song =
 /* ===========================================
    Update User Mood
 =========================================== */
-
-const user = req.user;
 
 if (user.currentMood !== mood) {
   user.currentMood = mood;

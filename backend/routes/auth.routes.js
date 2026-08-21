@@ -1,5 +1,12 @@
+
+
+
+
+
 import express from "express";
+
 import protect from "../middleware/auth.middleware.js";
+
 import {
   registerUser,
   loginUser,
@@ -7,56 +14,54 @@ import {
   googleLogin,
   getProfile,
 } from "../controllers/auth.controller.js";
+
 const router = express.Router();
+
+/* ==========================================================
+   PUBLIC AUTH ROUTES
+========================================================== */
 
 /* ================= Register ================= */
 
-router.post("/register", registerUser);
+router.post(
+  "/register",
+  registerUser
+);
 
 /* ================= Login ================= */
 
-router.post("/login", loginUser);
+router.post(
+  "/login",
+  loginUser
+);
+
+/* ================= Google Login ================= */
+
+router.post(
+  "/google",
+  googleLogin
+);
+
+
+/* ==========================================================
+   PROTECTED AUTH ROUTES
+========================================================== */
 
 /* ================= Logout ================= */
 
-router.post("/logout", logoutUser);
+router.post(
+  "/logout",
+  protect,
+  logoutUser
+);
 
-/* =================Google================= */
+/* ================= Profile ================= */
 
-router.post("/google", googleLogin);
+router.get(
+  "/profile",
+  protect,
+  getProfile
+);
 
 
-/* =================profile================= */
-
-router.get("/profile", protect, getProfile);
 export default router;
-
-
-
-
-
-
-
-
-
-
-
-
-// import express from "express";
-// import {
-//   register,
-//   login,
-//   logout,
-//   getProfile,
-// } from "../controllers/auth.controller.js";
-
-// import protect from "../middleware/auth.middleware.js";
-
-// const router = express.Router();
-
-// router.post("/register", register);
-// router.post("/login", login);
-// router.post("/logout", logout);
-// router.get("/profile", protect, getProfile);
-
-// export default router;

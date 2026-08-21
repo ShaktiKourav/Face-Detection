@@ -1,5 +1,9 @@
+
+
+
 import dotenv from "dotenv";
 dotenv.config();
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -21,13 +25,20 @@ import musicRoutes from "./routes/music.routes.js";
 
 import errorHandler from "./middleware/error.middleware.js";
 
-/* ================= Config ================= */
-
-
-
-connectDB();
+/* ==========================================================
+   APP
+========================================================== */
 
 const app = express();
+
+/* ==========================================================
+   ENVIRONMENT
+========================================================== */
+
+const PORT = Number(process.env.PORT) || 5000;
+
+const NODE_ENV =
+  process.env.NODE_ENV || "development";
 
 /* ==========================================================
    __dirname
@@ -37,42 +48,129 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* ==========================================================
-   MIDDLEWARE
+   CORS
 ========================================================== */
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:3000",
   process.env.CLIENT_URL,
-].filter(Boolean);
+]
+  .filter(Boolean)
+  .map((url) => url.replace(/\/$/, ""));
 
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      /*
+       * Allow requests without Origin header.
+       * Useful for:
+       * - Postman
+       * - server-to-server requests
+       * - health checks
+       */
+
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = origin.replace(/\/$/, "");
+
+      if (
+        allowedOrigins.includes(normalizedOrigin)
+      ) {
+        return callback(null, true);
+      }
+
+      console.warn(
+        `⚠️ CORS blocked request from: ${origin}`
+      );
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
+    },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
+/* ==========================================================
+   BODY PARSERS
+========================================================== */
+
+app.use(
+  express.json({
+    limit: "10mb",
+  })
+);
+
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "10mb",
+  })
+);
+
 app.use(cookieParser());
 
 /* ==========================================================
    STATIC FILES
 ========================================================== */
 
+/*
+ * Detection uploaded images
+ */
 
 app.use(
   "/uploads",
-  express.static(path.join(process.cwd(), "uploads"))
+  express.static(
+    path.join(process.cwd(), "uploads")
+  )
 );
+
+/*
+ * Music
+ */
+
 app.use(
   "/music",
-  express.static(path.join(process.cwd(), "public/music"))
+  express.static(
+    path.join(
+      process.cwd(),
+      "public",
+      "music"
+    )
+  )
 );
+
+/*
+ * Public images
+ */
 
 app.use(
   "/images",
-  express.static(path.join(process.cwd(), "public/images"))
+  express.static(
+    path.join(
+      process.cwd(),
+      "public",
+      "images"
+    )
+  )
 );
 
 /* ==========================================================
@@ -80,10 +178,24 @@ app.use(
 ========================================================== */
 
 app.get("/", (req, res) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
-    message: "🚀 AI MoodSense Backend Running Successfully",
+    message:
+      "🚀 AI MoodSense Backend Running Successfully",
     version: "1.0.0",
+    environment: NODE_ENV,
+  });
+});
+
+/* ==========================================================
+   API HEALTH CHECK
+========================================================== */
+
+app.get("/api/health", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "API is healthy",
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -91,54 +203,171 @@ app.get("/", (req, res) => {
    API ROUTES
 ========================================================== */
 
-app.use("/api/auth", authRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/detection", detectionRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/history", historyRoutes);
-app.use("/api/music", musicRoutes);
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/user",
+  userRoutes
+);
+
+app.use(
+  "/api/detection",
+  detectionRoutes
+);
+
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+
+app.use(
+  "/api/history",
+  historyRoutes
+);
+
+app.use(
+  "/api/music",
+  musicRoutes
+);
 
 /* ==========================================================
-   404 ROUTE
+   404 HANDLER
 ========================================================== */
 
 app.use((req, res) => {
-  res.status(404).json({
+  return res.status(404).json({
     success: false,
     message: "Route Not Found",
+    path: req.originalUrl,
   });
 });
 
 /* ==========================================================
-   ERROR HANDLER
+   GLOBAL ERROR HANDLER
 ========================================================== */
 
 app.use(errorHandler);
 
 /* ==========================================================
-   SERVER
+   START SERVER
 ========================================================== */
 
-const PORT = process.env.PORT || 5000;
+const startServer = async () => {
+  try {
+    console.log(
+      "=============================================="
+    );
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`
+    console.log(
+      "🔄 Connecting to MongoDB..."
+    );
+
+    await connectDB();
+
+    console.log(
+      "✅ MongoDB connected successfully"
+    );
+
+    const server = app.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+        console.log(`
 ==================================================
 🚀 AI MoodSense Server Started
 ==================================================
-🌐 PORT : ${PORT}
-📦 Mode : ${process.env.NODE_ENV || "development"}
+🌐 PORT        : ${PORT}
+📦 MODE        : ${NODE_ENV}
+🔗 CLIENT URL  : ${
+          process.env.CLIENT_URL ||
+          "Not configured"
+        }
 ==================================================
-`);
-});
+        `);
+      }
+    );
 
+    /* ======================================================
+       GRACEFUL SHUTDOWN
+    ====================================================== */
 
-process.on("uncaughtException", (err) => {
-  console.error(err);
-});
+    const shutdown = (signal) => {
+      console.log(
+        `\n⚠️ ${signal} received. Shutting down server...`
+      );
 
-process.on("unhandledRejection", (err) => {
-  console.error(err);
-});
+      server.close(() => {
+        console.log(
+          "✅ Server closed successfully."
+        );
 
+        process.exit(0);
+      });
+    };
+
+    process.on(
+      "SIGTERM",
+      () => shutdown("SIGTERM")
+    );
+
+    process.on(
+      "SIGINT",
+      () => shutdown("SIGINT")
+    );
+
+  } catch (error) {
+    console.error(
+      "❌ Failed to start server:"
+    );
+
+    console.error(error);
+
+    process.exit(1);
+  }
+};
+
+/* ==========================================================
+   PROCESS ERROR HANDLING
+========================================================== */
+
+process.on(
+  "uncaughtException",
+  (error) => {
+    console.error(
+      "❌ UNCAUGHT EXCEPTION:"
+    );
+
+    console.error(error);
+
+    process.exit(1);
+  }
+);
+
+process.on(
+  "unhandledRejection",
+  (error) => {
+    console.error(
+      "❌ UNHANDLED REJECTION:"
+    );
+
+    console.error(error);
+
+    process.exit(1);
+  }
+);
+
+/* ==========================================================
+   BOOT
+========================================================== */
+
+startServer();
+
+/* ==========================================================
+   EXPORT
+========================================================== */
+
+export default app;
 

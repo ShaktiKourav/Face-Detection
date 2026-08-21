@@ -2,11 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../services/api";
-import {
-  createUserWithEmailAndPassword,
-  updateProfile,
-  signInWithPopup,
-} from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -204,41 +200,98 @@ const Register = () => {
                   CREATE ACCOUNT
   ================================================== */
 
-  const handleRegister = async (e) => {
+//   const handleRegister = async (e) => {
+//   e.preventDefault();
+
+//   if (!validate()) return;
+
+//   setLoading(true);
+
+//   try {
+
+//     const { data } = await axios.post(
+//       "/auth/register",
+//       {
+//         name: form.name,
+//         email: form.email,
+//         password: form.password,
+//       }
+//     );
+
+
+// login(data.user, data.token);
+
+// navigate("/dashboard");
+
+//     localStorage.setItem(
+//       "isLoggedIn",
+//       "true"
+//     );
+
+  
+//     localStorage.setItem(
+//   "theme",
+//   localStorage.getItem("theme") || "light"
+// );
+
+//   } catch (error) {
+
+//     alert(
+//       error.response?.data?.message ||
+//       "Registration Failed"
+//     );
+
+//   } finally {
+
+//     setLoading(false);
+
+//   }
+// };
+
+const handleRegister = async (e) => {
   e.preventDefault();
 
-  if (!validate()) return;
+  if (!validate()) {
+    return;
+  }
 
   setLoading(true);
 
   try {
 
-    const { data } = await axios.post(
+    const { data } = await api.post(
       "/auth/register",
       {
-        name: form.name,
-        email: form.email,
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
         password: form.password,
       }
     );
 
+    /* ================= LOGIN CONTEXT ================= */
 
-login(data.user, data.token);
-
-navigate("/dashboard");
-
-    localStorage.setItem(
-      "isLoggedIn",
-      "true"
+    login(
+      data.user,
+      data.token
     );
 
-  
+    /* ================= THEME ================= */
+
     localStorage.setItem(
-  "theme",
-  localStorage.getItem("theme") || "light"
-);
+      "theme",
+      localStorage.getItem("theme") || "light"
+    );
+
+    /* ================= REDIRECT ================= */
+
+    navigate("/dashboard");
 
   } catch (error) {
+
+    console.error(
+      "Registration error:",
+      error
+    );
 
     alert(
       error.response?.data?.message ||
@@ -248,10 +301,8 @@ navigate("/dashboard");
   } finally {
 
     setLoading(false);
-
   }
 };
-
 
   /* ==================================================
                   GOOGLE REGISTER
@@ -259,39 +310,103 @@ navigate("/dashboard");
 
 
 
-  const handleGoogleSignup = async () => {
+//   const handleGoogleSignup = async () => {
+//   setGoogleLoading(true);
+
+//   try {
+//     const result = await signInWithPopup(auth, provider);
+
+//     const idToken = await result.user.getIdToken();
+
+//    const { data } = await api.post(
+//   "/auth/google",
+//   {
+//     token: idToken,
+//   }
+// );
+
+// login(data.user, data.token);
+
+//     navigate("/dashboard");
+
+//   } catch (error) {
+
+//     alert(
+//       error.response?.data?.message ||
+//       error.message
+//     );
+
+//   } finally {
+
+//     setGoogleLoading(false);
+
+//   }
+// };
+
+const handleGoogleSignup = async () => {
+
   setGoogleLoading(true);
 
   try {
-    const result = await signInWithPopup(auth, provider);
 
-    const idToken = await result.user.getIdToken();
+    /* ==============================================
+       FIREBASE GOOGLE LOGIN
+    ============================================== */
 
-   const { data } = await api.post(
-  "/auth/google",
-  {
-    token: idToken,
-  }
-);
+    const result = await signInWithPopup(
+      auth,
+      provider
+    );
 
-login(data.user, data.token);
+    /* ==============================================
+       FIREBASE ID TOKEN
+    ============================================== */
 
+    const idToken =
+      await result.user.getIdToken();
 
-    localStorage.setItem("isLoggedIn", "true");
+    /* ==============================================
+       SEND TOKEN TO BACKEND
+    ============================================== */
+
+    const { data } = await api.post(
+      "/auth/google",
+      {
+        token: idToken,
+      }
+    );
+
+    /* ==============================================
+       SAVE OUR JWT AUTH
+    ============================================== */
+
+    login(
+      data.user,
+      data.token
+    );
+
+    /* ==============================================
+       REDIRECT
+    ============================================== */
 
     navigate("/dashboard");
 
   } catch (error) {
 
+    console.error(
+      "Google signup error:",
+      error
+    );
+
     alert(
       error.response?.data?.message ||
-      error.message
+      error.message ||
+      "Google registration failed"
     );
 
   } finally {
 
     setGoogleLoading(false);
-
   }
 };
 

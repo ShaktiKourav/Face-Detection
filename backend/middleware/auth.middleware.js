@@ -1,123 +1,116 @@
-// import jwt from "jsonwebtoken";
-// import User from "../models/User.model.js";
-
-// const protect = async (req, res, next) => {
-//   try {
-//     let token;
-
-//     // ================= Authorization Header =================
-
-//     if (
-//       req.headers.authorization &&
-//       req.headers.authorization.startsWith("Bearer")
-//     ) {
-//       token = req.headers.authorization.split(" ")[1];
-//     }
-
-//     // ================= Token Missing =================
-
-//     if (!token) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Access Denied. Token Missing.",
-//       });
-//     }
-
-//     // ================= Verify Token =================
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-//     // ================= Find User =================
-
-//     const user = await User.findById(decoded.id).select("-password");
-
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "User Not Found",
-//       });
-//     }
-
-//     // ================= Attach User =================
-
-//     req.user = user;
-
-//     next();
-//   } catch (error) {
-//     return res.status(401).json({
-//       success: false,
-//       message: "Invalid or Expired Token",
-//     });
-//   }
-// };
-
-// export default protect;
 
 
 
 import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 
+/*
+==========================================================
+  PROTECT MIDDLEWARE
+  - Checks JWT from Authorization header
+  - Verifies token
+  - Finds user
+  - Attaches user to req.user
+==========================================================
+*/
+
 const protect = async (req, res, next) => {
-
-  console.log("========== PROTECT ==========");
-  console.log("next =", typeof next);
-
   try {
-    let token;
+    /* =====================================================
+       GET TOKEN FROM AUTHORIZATION HEADER
+    ===================================================== */
 
-    /* ================= Authorization Header ================= */
+    const authHeader = req.headers.authorization;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer ")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Access denied. Please login first.",
+      });
     }
 
-    /* ================= Token Missing ================= */
+    /* =====================================================
+       EXTRACT JWT
+    ===================================================== */
+
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Access Denied. Please login first.",
+        message: "Authentication token missing.",
       });
     }
 
-    /* ================= Verify JWT ================= */
+    /* =====================================================
+       VERIFY JWT
+    ===================================================== */
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
+    let decoded;
 
-    /* ================= Find User ================= */
+    try {
+      decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      );
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message:
+          error.name === "TokenExpiredError"
+            ? "Session expired. Please login again."
+            : "Invalid authentication token.",
+      });
+    }
 
-    const user = await User.findById(decoded.id).select("-password");
+    /* =====================================================
+       CHECK TOKEN PAYLOAD
+    ===================================================== */
+
+    if (!decoded?.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid authentication token.",
+      });
+    }
+
+    /* =====================================================
+       FIND USER
+    ===================================================== */
+
+    const user = await User.findById(decoded.id)
+      .select("-password");
 
     if (!user) {
-      return res.status(404).json({
+      return res.status(401).json({
         success: false,
-        message: "User not found.",
+        message: "User account not found.",
       });
     }
 
-    /* ================= Attach User ================= */
+    /* =====================================================
+       ATTACH USER TO REQUEST
+    ===================================================== */
 
     req.user = user;
-    console.log("Calling next...");
+
+    /* =====================================================
+       CONTINUE REQUEST
+    ===================================================== */
+
     next();
-    console.log("After next()");
+
   } catch (error) {
+    console.error(
+      "AUTH MIDDLEWARE ERROR:",
+      error
+    );
 
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
-      message: "Invalid or Expired Token.",
+      message: "Authentication server error.",
     });
-
   }
 };
 
 export default protect;
-
-

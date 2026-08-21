@@ -1,35 +1,50 @@
-import bcrypt from "bcryptjs";
+
+
 import User from "../models/User.model.js";
 
 /* ==========================================================
-   Get User Profile
+   SAFE USER DATA
+========================================================== */
+
+const getSafeUser = (user) => {
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    profileImage: user.profileImage || "",
+    currentMood: user.currentMood || "Neutral",
+    role: user.role || "user",
+    provider: user.provider || "local",
+    isVerified: Boolean(user.isVerified),
+  };
+};
+
+/* ==========================================================
+   GET USER PROFILE
 ========================================================== */
 
 export const getUserProfile = async (req, res) => {
   try {
-
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      user: req.user,
+      user: getSafeUser(req.user),
     });
-
   } catch (error) {
+    console.error("GET USER PROFILE ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to fetch user profile",
     });
-
   }
 };
 
 /* ==========================================================
-   Update User Profile
+   UPDATE USER PROFILE
 ========================================================== */
 
 export const updateUserProfile = async (req, res) => {
   try {
-
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -39,37 +54,86 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    user.name = req.body.name || user.name;
-    user.email = req.body.email || user.email;
+    /* ================= NAME ================= */
 
-    const updatedUser = await user.save();
+    if (req.body.name !== undefined) {
+      const name = req.body.name.trim();
 
-    res.status(200).json({
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message: "Name cannot be empty",
+        });
+      }
+
+      if (name.length < 2) {
+        return res.status(400).json({
+          success: false,
+          message: "Name must contain at least 2 characters",
+        });
+      }
+
+      user.name = name;
+    }
+
+    /* ================= SAVE ================= */
+
+    await user.save();
+
+    return res.status(200).json({
       success: true,
       message: "Profile Updated Successfully",
-      user: updatedUser,
+      user: getSafeUser(user),
     });
 
   } catch (error) {
+    console.error("UPDATE PROFILE ERROR:", error);
 
-    res.status(500).json({
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to update profile",
     });
-
   }
 };
 
 /* ==========================================================
-   Change Password
+   CHANGE PASSWORD
 ========================================================== */
 
 export const changePassword = async (req, res) => {
   try {
+    const {
+      oldPassword,
+      newPassword,
+    } = req.body;
 
-    const { oldPassword, newPassword } = req.body;
+    /* ================= VALIDATION ================= */
 
-    const user = await User.findById(req.user._id);
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Old password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "New password must contain at least 6 characters",
+      });
+    }
+
+    /* ================= USER ================= */
+
+    const user = await User.findById(req.user._id)
+      .select("+password");
 
     if (!user) {
       return res.status(404).json({
@@ -78,7 +142,23 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    const isMatch = await user.comparePassword(oldPassword);
+    /* ================= GOOGLE ACCOUNT ================= */
+
+    if (
+      user.provider === "google" &&
+      !user.password
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Google accounts cannot change password here. Please use Google authentication.",
+      });
+    }
+
+    /* ================= PASSWORD CHECK ================= */
+
+    const isMatch =
+      await user.comparePassword(oldPassword);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -87,34 +167,33 @@ export const changePassword = async (req, res) => {
       });
     }
 
+    /* ================= NEW PASSWORD ================= */
+
     user.password = newPassword;
 
     await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Password Changed Successfully",
     });
 
   } catch (error) {
+    console.error("CHANGE PASSWORD ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to change password",
     });
-
   }
 };
 
 /* ==========================================================
-   Update Profile Image
+   UPDATE PROFILE IMAGE
 ========================================================== */
 
 export const updateProfileImage = async (req, res) => {
   try {
-    console.log("Controller reached");
-    console.log(req.file);
-
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -124,26 +203,37 @@ export const updateProfileImage = async (req, res) => {
       });
     }
 
-    if (req.file) {
-      user.profileImage =
-        "/uploads/profiles/" + req.file.filename;
+    /* ================= FILE CHECK ================= */
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile image is required",
+      });
     }
+
+    /* ================= SAVE IMAGE PATH ================= */
+
+    user.profileImage =
+      `/uploads/profiles/${req.file.filename}`;
 
     await user.save();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Profile Image Updated Successfully",
       profileImage: user.profileImage,
     });
 
   } catch (error) {
-    console.error(error);
-    console.error(error.stack);
+    console.error(
+      "UPDATE PROFILE IMAGE ERROR:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to update profile image",
     });
   }
 };

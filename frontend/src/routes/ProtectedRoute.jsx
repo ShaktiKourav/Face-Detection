@@ -1,16 +1,18 @@
 
 
+// import { Navigate, useLocation } from "react-router-dom";
+// import { useAuth } from "../context/AuthContext";
+
 // const ProtectedRoute = ({ children }) => {
+
+//   const { isLoggedIn, loading } = useAuth();
+
 //   const location = useLocation();
 
-//   // JWT Token
-//   const token = localStorage.getItem("token");
+//   if (loading) return null;
 
-//   // User Data (Optional)
-//   const user = localStorage.getItem("user");
+//   if (!isLoggedIn) {
 
-//   // Not Logged In
-//   if (!token || !user) {
 //     return (
 //       <Navigate
 //         to="/"
@@ -18,39 +20,76 @@
 //         state={{ from: location }}
 //       />
 //     );
+
 //   }
 
-//   // Logged In
 //   return children;
 // };
+//export default ProtectedRoute;
 
 
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-
-  const { isLoggedIn, loading } = useAuth();
+  const {
+    isAuthenticated,
+    loading,
+  } = useAuth();
 
   const location = useLocation();
 
-  if (loading) return null;
+  /* ==========================================================
+     AUTH STATE LOADING
+  ========================================================== */
 
-  if (!isLoggedIn) {
+  if (loading) {
+    return (
+      <div
+        className="
+          flex
+          min-h-screen
+          items-center
+          justify-center
+          bg-[var(--bg-color)]
+        "
+      >
+        <div
+          className="
+            h-10
+            w-10
+            animate-spin
+            rounded-full
+            border-4
+            border-pink-500
+            border-t-transparent
+          "
+        />
+      </div>
+    );
+  }
 
+  /* ==========================================================
+     NOT AUTHENTICATED
+  ========================================================== */
+
+  if (!isAuthenticated) {
     return (
       <Navigate
         to="/"
         replace
-        state={{ from: location }}
+        state={{
+          from: location,
+        }}
       />
     );
-
   }
+
+  /* ==========================================================
+     AUTHENTICATED
+  ========================================================== */
 
   return children;
 };
-
-
 
 export default ProtectedRoute;
