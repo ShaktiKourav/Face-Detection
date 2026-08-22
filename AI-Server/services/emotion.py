@@ -10,7 +10,7 @@ def detect_emotion(image_path):
 
         result = DeepFace.analyze(
             img_path=image_path,
-            actions=["emotion", "age", "gender"],
+            actions=["emotion"],
             detector_backend="opencv",
             enforce_detection=False
         )
@@ -31,8 +31,6 @@ def detect_emotion(image_path):
                     2,
                 )
             ),
-            "age": int(result["age"]),
-            "gender": str(result["dominant_gender"]),
             "all_emotions": {
                 key: float(value)
                 for key, value in result["emotion"].items()
