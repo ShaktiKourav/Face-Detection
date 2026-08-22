@@ -1,4 +1,4 @@
-from deepface import DeepFace
+#from deepface import DeepFace
 import traceback
 import os
 

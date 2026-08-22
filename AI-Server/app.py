@@ -82,7 +82,7 @@ import shutil
 import os
 import traceback
 
-from services.emotion import detect_emotion
+#from services.emotion import detect_emotion
 
 
 UPLOAD_DIR = "uploads"
@@ -125,10 +125,39 @@ def home():
 # Detect Emotion
 # =====================================================
 
+# @app.post("/detect")
+# async def detect(file: UploadFile = File(...)):
+#     try:
+#         file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+#         print("Received File:", file.filename)
+#         print("Saving To:", file_path)
+
+#         with open(file_path, "wb") as buffer:
+#             shutil.copyfileobj(file.file, buffer)
+
+#         return detect_emotion(file_path)
+
+#     except Exception:
+#         traceback.print_exc()
+
+#         return JSONResponse(
+#             status_code=500,
+#             content={
+#                 "success": False,
+#                 "message": "AI detection failed"
+#             }
+#         )
+
 @app.post("/detect")
 async def detect(file: UploadFile = File(...)):
     try:
-        file_path = os.path.join(UPLOAD_DIR, file.filename)
+        from services.emotion import detect_emotion
+
+        file_path = os.path.join(
+            UPLOAD_DIR,
+            file.filename
+        )
 
         print("Received File:", file.filename)
         print("Saving To:", file_path)
@@ -136,15 +165,19 @@ async def detect(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        return detect_emotion(file_path)
+        result = detect_emotion(file_path)
 
-    except Exception:
+        print("AI Result:", result)
+
+        return result
+
+    except Exception as e:
         traceback.print_exc()
 
         return JSONResponse(
             status_code=500,
             content={
                 "success": False,
-                "message": "AI detection failed"
+                "message": str(e)
             }
         )
