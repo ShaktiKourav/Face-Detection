@@ -146,20 +146,33 @@ const handleCapture = async (image) => {
     // ==========================================
 
     console.log("🚀 Sending data to backend...");
+    console.log("🌐 API URL:", import.meta.env.VITE_API_URL);
 
+    // const response = await api.post(
+    //   "/detection/capture",
+    //   {
+    //     image: image,
+    //     personName: "Unknown",
+
+    //     emotion: ai.emotion,
+    //     confidence: ai.confidence,
+    //     age: ai.age,
+    //     gender: ai.gender,
+    //     allEmotions: ai.all_emotions,
+    //   }
+    // );
     const response = await api.post(
-      "/detection/capture",
-      {
-        image: image,
-        personName: "Unknown",
-
-        emotion: ai.emotion,
-        confidence: ai.confidence,
-        age: ai.age,
-        gender: ai.gender,
-        allEmotions: ai.all_emotions,
-      }
-    );
+  "/detection/capture",
+  {
+    image,
+    personName: "Unknown",
+    emotion: ai.emotion,
+    confidence: ai.confidence,
+    age: ai.age,
+    gender: ai.gender,
+    allEmotions: ai.all_emotions,
+  }
+);
 
     console.log("✅ Backend response received:");
     console.log(response.data);

@@ -1,9 +1,26 @@
 
 
-
+import "dotenv/config";
 import dotenv from "dotenv";
 dotenv.config();
+console.log(
+  "IMAGEKIT PUBLIC KEY:",
+  process.env.IMAGEKIT_PUBLIC_KEY
+    ? "FOUND"
+    : "MISSING"
+);
 
+console.log(
+  "IMAGEKIT PRIVATE KEY:",
+  process.env.IMAGEKIT_PRIVATE_KEY
+    ? "FOUND"
+    : "MISSING"
+);
+
+console.log(
+  "IMAGEKIT URL:",
+  process.env.IMAGEKIT_URL_ENDPOINT
+);
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
