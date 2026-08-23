@@ -102,7 +102,6 @@ Supported emotions:
 
 The AI pipeline analyzes the captured face and returns:
 
-```text
 Emotion
 Confidence Score
 Emotion Probabilities
