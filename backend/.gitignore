@@ -98,5 +98,5 @@ firebase-service-account.json
 # ==========================================================
 # Render / Deployment
 # ==========================================================
-
+/config/firebaseAdmin.js
 .render/
